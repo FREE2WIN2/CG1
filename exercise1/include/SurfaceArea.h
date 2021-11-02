@@ -9,4 +9,4 @@
 //computes the surface area of the halfedge mesh mesh by computing and summing up the
 //areas of all polygonal faces
 //method is not restricted to triangle meshes
-float ComputeSurfaceArea(HEMesh mesh);
+float ComputeSurfaceArea(const HEMesh& mesh);

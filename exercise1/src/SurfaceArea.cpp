@@ -6,7 +6,7 @@
 #include "SurfaceArea.h"
 
 
-float ComputeSurfaceArea(HEMesh mesh) {
+float ComputeSurfaceArea(const HEMesh& mesh) {
     float area = 0.0;
     /* Task 1.2.2 */
 
