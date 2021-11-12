@@ -13,30 +13,7 @@ float ComputeVolume(HEMesh &mesh) {
 
     /* Mesh is already triangulated!*/
 
-    int number_of_faces = 0;
-    int number_of_vertices = 0;
-    int number_of_edges = 0;
-
     for (HEMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
-        number_of_faces++;
-    }
-    for (HEMesh::VertexIter v_it = mesh.vertices_begin(); v_it != mesh.vertices_end(); ++v_it) {
-        number_of_vertices++;
-    }
-    for (HEMesh::EdgeIter e_it = mesh.edges_begin(); e_it != mesh.edges_end(); ++e_it) {
-        number_of_edges++;
-    }
-
-    int check_sum = number_of_vertices + number_of_faces - number_of_edges;
-    if(check_sum != 2){
-        std::cout << "No closed 3D Object! return 0" << std::endl;
-        return vol;
-    }
-
-
-    for (HEMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
-        /* Now we have triangle surfaces! */
-
         HEMesh::FaceVertexIter fv_it = mesh.fv_begin(*f_it);
         HEMesh::Point point1 = mesh.point(*fv_it);
         ++fv_it;
