@@ -24,8 +24,5 @@ float ComputeVolume(HEMesh &mesh) {
         vol += point1.dot(point2.cross(point3)) / 6.0f;
     }
 
-    /* Improvements: Check if object ist closed(but its not the task)*/
-
-    /* e.g. triangulate and check that V + F - E = 2 (Euler)*/
     return vol;
 }
