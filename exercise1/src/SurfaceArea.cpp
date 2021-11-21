@@ -2,36 +2,26 @@
 // chair of the TU Dresden. Do not distribute! 
 // Copyright (C) CGV TU Dresden - All Rights Reserved
 
+#include <iostream>
 #include "SurfaceArea.h"
 
-#include <iostream>
 
-
-/* still dont work //TODO*/
-float ComputeSurfaceArea(HEMesh& mesh) {
+float ComputeSurfaceArea(HEMesh &mesh) {
     float area = 0.0;
     /* Task 1.2.2 */
-    HEMesh::VertexIter v_it, v_end(mesh.vertices_end());
-    HEMesh::VertexFaceIter     vf_it;
 
-    /* Iterate over vertices */
-    for (v_it = mesh.vertices_begin(); v_it != v_end; ++v_it) {
+    /* Iterate over faces */
+    for (HEMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
+        HEMesh::Point face_area(0, 0, 0);
 
-
-        /* Iterate over faces */
-        for (vf_it = mesh.vf_iter(v_it); vf_it; ++vf_it) {
-            HEMesh::PolyConnectivity::FaceVertexIter fv_it = mesh.fv_iter(vf_it);
-
-            const OpenMesh::Vec3f P = mesh.point(fv_it);
-            ++fv_it;
-            const OpenMesh::Vec3f Q = mesh.point(fv_it);
-            ++fv_it;
-            const OpenMesh::Vec3f R = mesh.point(fv_it);
-            std::cout << (((Q - P) % (R - P)).norm() * 0.5f * 0.3333f) << std::endl;
-            area += ((Q - P) % (R - P)).norm() * 0.5f * 0.3333f;    // norm: compute euclidean norm, return Scalar
+        /* had to remove const from parameter mesh because mesh.fh_begin() don't work on const variable */
+        for (HEMesh::FaceHalfedgeIter fh_it = mesh.fh_begin(*f_it); fh_it != mesh.fh_end(*f_it); ++fh_it) {
+            //would do with *fh_it.to() but it returns smart vertex handle!
+            HEMesh::Point from_point = mesh.point(mesh.from_vertex_handle(*fh_it));
+            HEMesh::Point to_point = mesh.point(mesh.to_vertex_handle(*fh_it));
+            face_area += from_point.cross(to_point);
         }
-        std::cout << "area ";
-        std::cout << area << std::endl;
+        area += 0.5f * abs(face_area.length());
     }
     return area;
 }

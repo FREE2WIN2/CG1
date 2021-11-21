@@ -6,10 +6,23 @@
 
 #include <iostream>
 
-float ComputeVolume(const HEMesh& m)
-{
-	float vol = 0;
-	/*Task 1.2.2*/
-	std::cout << "Volume calculation is not implemented." << std::endl;
-	return vol;
+
+
+float ComputeVolume(HEMesh &mesh) {
+    float vol = 0;
+
+    /* Mesh is already triangulated!*/
+
+    for (HEMesh::FaceIter f_it = mesh.faces_begin(); f_it != mesh.faces_end(); ++f_it) {
+        HEMesh::FaceVertexIter fv_it = mesh.fv_begin(*f_it);
+        HEMesh::Point point1 = mesh.point(*fv_it);
+        ++fv_it;
+        HEMesh::Point point2 = mesh.point(*fv_it);
+        ++fv_it;
+        HEMesh::Point point3 = mesh.point(*fv_it);
+
+        vol += point1.dot(point2.cross(point3)) / 6.0f;
+    }
+
+    return vol;
 }
