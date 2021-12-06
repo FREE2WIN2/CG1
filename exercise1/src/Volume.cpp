@@ -20,8 +20,8 @@ float ComputeVolume(HEMesh &mesh) {
         HEMesh::Point point2 = mesh.point(*fv_it);
         ++fv_it;
         HEMesh::Point point3 = mesh.point(*fv_it);
-
-        vol += point1.dot(point2.cross(point3)) / 6.0f;
+// ABS
+        vol += abs(point1.dot(point2.cross(point3))) / 6.0f;
     }
 
     return vol;
