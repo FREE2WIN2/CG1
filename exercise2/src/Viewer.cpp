@@ -18,7 +18,7 @@
 
 Viewer::Viewer()
 	: AbstractViewer("CG1 Exercise 2")
-{ 
+{
 	SetupGUI();
 
 	CreateShaders();
@@ -62,11 +62,11 @@ void Viewer::CreateVertexBuffers()
 		1, -1, 0, 1
 	};
 
-	
 
-	
 
-	// Generate the vertex array 
+
+
+	// Generate the vertex array
 	glGenVertexArrays(1, &vertex_array_id);
 	glBindVertexArray(vertex_array_id);
 
@@ -77,10 +77,10 @@ void Viewer::CreateVertexBuffers()
 	// Supply the position data
 	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 	// The buffer shall now be linked to the shader attribute
-	// "in_position". First, get the location of this attribute in 
+	// "in_position". First, get the location of this attribute in
 	// the shader program
 	GLuint vid = glGetAttribLocation(program_id, "in_position");
-	
+
 	// Enable this vertex attribute array
 	glEnableVertexAttribArray(vid);
 	// Set the format of the data to match the type of "in_position"
@@ -90,15 +90,33 @@ void Viewer::CreateVertexBuffers()
 	Create another buffer that will store color information. This works nearly
 	similar to the code above that creates the position buffer. Store the buffer
 	id into the variable "color_buffer_id" and bind the color buffer to the
-	shader variable "in_color".
+	shader variable "in_color". ***/
 
+    GLfloat colors[] = {
+            255, 0, 0, 1.0,
+            0, 255, 0, 1.0,
+            0, 0, 255, 1.0
+    };
 
+    /* Generate Frame Buffer */
+    glGenFramebuffers(1, &color_buffer_id);
+    glBindFramebuffer(GL_FRAMEBUFFER, color_buffer_id);
+
+    glGenBuffers(1, &color_buffer_id);
+    glBindBuffer(GL_FRAMEBUFFER, color_buffer_id);
+    glBufferData(GL_FRAMEBUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+    GLuint cid = glGetAttribLocation(program_id, "in_color");
+
+    // Enable this vertex attribute array
+    glEnableVertexAttribArray(cid);
+    // Set the format of the data to match the type of "in_position"
+    glVertexAttribPointer(cid, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	/*** End of task 2.2.2 (a) ***/
-	
-	
 
-	// Unbind the vertex array to leave OpenGL in a clean state
+
+    // Unbind the vertex array to leave OpenGL in a clean state
 	glBindVertexArray(0);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
 //Checks if the given shader has been compiled successfully. Otherwise, prints an
@@ -138,8 +156,7 @@ void Viewer::CreateShaders()
 	attach both shader objects and link them. For error checking, you can
 	use the method "CheckShaderCompileStatus()" after the call to glCompileShader().
 	*/
-	/* First create new Program! */
-	program_id = glCreateProgram();
+
 
 	/* Create Shader */
 	vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
@@ -154,12 +171,15 @@ void Viewer::CreateShaders()
     /* Check compilation */
     CheckShaderCompileStatus(vertex_shader_id,"Vertex Shader");
     CheckShaderCompileStatus(fragment_shader_id,"Fragment Shader");
+    /* Create new program */
+    program_id = glCreateProgram();
     /* Attach Shader */
     glAttachShader(program_id,vertex_shader_id);
     glAttachShader(program_id,fragment_shader_id);
     /* Link Program */
     glLinkProgram(program_id);
-    /* Detach after sucessful linking */
+    /* Use of Program not necessary (is used in drawContents)*/
+    /* Detach after sucessful linking (optional) */
     glDetachShader(program_id, vertex_shader_id);
     glDetachShader(program_id, fragment_shader_id);
 	/*** End of task 2.2.1 ***/
@@ -193,16 +213,16 @@ void Viewer::drawContents()
 	/*** Begin of task 2.2.4 (b) ***
 	Set the shader variables for the modelview and projection matrix.
 	First, find the location of these variables using glGetUniformLocation and
-	then set them with the command glUniformMatrix4fv. 
+	then set them with the command glUniformMatrix4fv.
 	*/
 
-	// Bind the vertex array 
+	// Bind the vertex array
 	glBindVertexArray(vertex_array_id);
 	// Draw the bound vertex array. Start at element 0 and draw 3 vertices
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	/*** End of task 2.2.4 (b) ***/
-	
+
 	// Unbind the vertex array
 	glBindVertexArray(0);
 	// Deactivate the shader program
