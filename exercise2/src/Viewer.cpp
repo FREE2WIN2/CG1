@@ -138,6 +138,30 @@ void Viewer::CreateShaders()
 	attach both shader objects and link them. For error checking, you can
 	use the method "CheckShaderCompileStatus()" after the call to glCompileShader().
 	*/
+	/* First create new Program! */
+	program_id = glCreateProgram();
+
+	/* Create Shader */
+	vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+    fragment_shader_id = glad_glCreateShader(GL_FRAGMENT_SHADER);
+
+    /* set Source */
+    glShaderSource(vertex_shader_id, 1,&vertex_content, 0); //void glShaderSource(GLuint shader, GLsizei count, const GLchar **string, const GLint *length);
+    glShaderSource(fragment_shader_id, 1, &fragment_content, 0);
+    /* Compile Shader */
+    glCompileShader(vertex_shader_id);
+    glCompileShader(fragment_shader_id);
+    /* Check compilation */
+    CheckShaderCompileStatus(vertex_shader_id,"Vertex Shader");
+    CheckShaderCompileStatus(fragment_shader_id,"Fragment Shader");
+    /* Attach Shader */
+    glAttachShader(program_id,vertex_shader_id);
+    glAttachShader(program_id,fragment_shader_id);
+    /* Link Program */
+    glLinkProgram(program_id);
+    /* Detach after sucessful linking */
+    glDetachShader(program_id, vertex_shader_id);
+    glDetachShader(program_id, fragment_shader_id);
 	/*** End of task 2.2.1 ***/
 }
 
