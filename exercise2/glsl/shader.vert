@@ -6,14 +6,17 @@
 in vec4 in_position;
 in vec4 in_color;
 
-out vec4 fragment_color;
+uniform mat4 modelview;
+uniform mat4 projection;
 
+out vec4 fragment_color;
+out vec2 position;
 
 
 
 void main(void)
 {
-	gl_Position = in_position;
+
 
 
 	/* - 2.2.2 (b)
@@ -28,8 +31,13 @@ void main(void)
 	 * that store the modelview and projection matrix. To apply the transformations
 	 * multiply the value of "in_position" before setting "gl_Position". */
 
+	gl_Position = projection * modelview * in_position;
+
 	/* - 2.2.5
 	 * The algorithm to calculate the julia fractal needs a position as input.
 	 * Declare another "out" variable and set it to the untransformed input
 	 * position. */
+	position = in_position.xy;
+
+
 }
