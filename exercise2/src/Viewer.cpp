@@ -103,6 +103,14 @@ void Viewer::CreateVertexBuffers() {
     id into the variable "color_buffer_id" and bind the color buffer to the
     shader variable "in_color". ***/
 
+    /* 2.2.2 a
+     *   GLfloat colors[] = {
+     *      1.0, 0, 0, 1,
+     *      0, 1.0, 0, 1,
+     *      0, 0, 1.0, 1
+     *   }
+     */
+
     GLfloat colors[] = {
             0, 1.0, 0, 1,
             0, 1.0, 0, 1,
