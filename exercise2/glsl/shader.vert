@@ -5,6 +5,7 @@
 
 in vec4 in_position;
 in vec4 in_color;
+in vec2 in_position_xy;
 
 uniform mat4 modelview;
 uniform mat4 projection;
@@ -37,7 +38,10 @@ void main(void)
 	 * The algorithm to calculate the julia fractal needs a position as input.
 	 * Declare another "out" variable and set it to the untransformed input
 	 * position. */
-	position = in_position.xy;
+	/*position = in_position.xy;*/
+
+	/* Bonus Task */
+	position = in_position_xy;
 
 
 }

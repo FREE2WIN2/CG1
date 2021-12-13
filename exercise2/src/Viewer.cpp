@@ -97,6 +97,38 @@ void Viewer::CreateVertexBuffers() {
     // Set the format of the data to match the type of "in_position"
     glVertexAttribPointer(vid, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
+    /*** Bonus Task 2 ***/
+    /* Array with only x and y coord (w value is unnecessary because we don't draw this. So we don't need the w information)*/
+    GLfloat xy_positions[] = {
+            -1, 1,
+            1, -1,
+            1, 1,
+
+            -1, 1,
+            1, 1,
+            -1, -1,
+
+            1, 1,
+            1, -1,
+            -1, -1,
+
+            -1, 1,
+            -1, -1,
+            1, -1
+    };
+
+    glGenBuffers(1, &position_xy_id);
+    // Bind the buffer for subsequent settings
+    glBindBuffer(GL_ARRAY_BUFFER, position_xy_id);
+    // Supply the position data
+    glBufferData(GL_ARRAY_BUFFER, sizeof(xy_positions), xy_positions, GL_STATIC_DRAW);
+    GLuint pid = glGetAttribLocation(program_id, "in_position_xy");
+
+    // Enable this vertex attribute array
+    glEnableVertexAttribArray(pid);
+    // Set the format of the data to match the type of "in_position"
+    glVertexAttribPointer(pid, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
     /*** Begin of task 2.2.2 (a) ***
     Create another buffer that will store color information. This works nearly
     similar to the code above that creates the position buffer. Store the buffer
@@ -129,9 +161,7 @@ void Viewer::CreateVertexBuffers() {
             0, 1.0, 1.0, 1
     };
 
-    /* Generate Frame Buffer */
     glGenBuffers(1, &color_buffer_id);
-
     glBindBuffer(GL_ARRAY_BUFFER, color_buffer_id);
     glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
     GLuint cid = glGetAttribLocation(program_id, "in_color");
