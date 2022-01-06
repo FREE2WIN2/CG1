@@ -19,35 +19,35 @@ const vec3 dirToLight = normalize(vec3(1, 3, 1));
 //Calculates the visible surface color based on the Blinn-Phong illumination model
 vec4 calculateLighting(vec4 materialColor, float specularIntensity, vec3 normalizedNormal, vec3 directionToViewer)
 {
-	vec4 color = materialColor;
-	vec3 h = normalize(dirToLight + directionToViewer);
-	color.xyz *= 0.9 * max(dot(normalizedNormal, dirToLight), 0) + 0.1;
-	color.xyz += specularIntensity * pow(max(dot(h, normalizedNormal), 0), 50);
-	return color;
+    vec4 color = materialColor;
+    vec3 h = normalize(dirToLight + directionToViewer);
+    color.xyz *= 0.9 * max(dot(normalizedNormal, dirToLight), 0) + 0.1;
+    color.xyz += specularIntensity * pow(max(dot(h, normalizedNormal), 0), 50);
+    return color;
 }
 
 vec4 getBackgroundColor()
 {
-	return texture(background, gl_FragCoord.xy / screenSize);
+    return texture(background, gl_FragCoord.xy / screenSize);
 }
 
-vec4 getTextureColor(){
-	return texture(textureSampler, mod(fragCoord,255/10));
+vec4 getTextureColor()
+{
+    return texture(textureSampler, mod(fragCoord / 255 * 10,1));
 }
 
 void main()
 {
-	//surface geometry
-	vec3 dirToViewer = vec3(0, 1, 0);
+    //surface geometry
+    vec3 dirToViewer = vec3(0, 1, 0);
 
-	//material properties	
-	color = getTextureColor();
-	float specular = 0;
+    //material properties
+    color = getTextureColor();
+    float specular = 0;
 
-	
 
-	//Calculate light
-	color = calculateLighting(color, specular, normal, dirToViewer);
+    //Calculate light
+    color = calculateLighting(color, specular, normal, dirToViewer);
 
-	
+
 }
