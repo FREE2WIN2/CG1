@@ -26,8 +26,8 @@ private:
 
 	Eigen::Matrix4f view, proj;
 
-	nse::gui::GLShader skyShader;
-	nse::gui::GLVertexArray emptyVAO;
+        nse::gui::GLShader skyShader;
+        nse::gui::GLVertexArray emptyVAO;
 
 	nse::gui::GLShader terrainShader;
 	nse::gui::GLVertexArray terrainVAO;

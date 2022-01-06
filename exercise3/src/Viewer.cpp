@@ -64,10 +64,28 @@ void Viewer::LoadShaders() {
 
 GLuint CreateTexture(const unsigned char *fileData, size_t fileLength, bool repeat = true) {
     GLuint textureName;
+    GLuint wrapMode = GL_REPEAT;
+    if (!repeat) {
+        wrapMode = GL_CLAMP_TO_BORDER;
+    }
+    glGenTextures(1, &textureName);
+    glBindTexture(GL_TEXTURE_2D, textureName);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); //minification Filter
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); //magnification Filter
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode); //WrapMode
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+
     int textureWidth, textureHeight, textureChannels;
-    auto pixelData = stbi_load_from_memory(fileData, (int) fileLength, &textureWidth, &textureHeight, &textureChannels,
-                                           3);
-    textureName = 0;
+    unsigned char *pixelData = stbi_load_from_memory(fileData, (int) fileLength, &textureWidth, &textureHeight,
+                                                     &textureChannels, 3);
+    if (pixelData) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                     pixelData); //create Texture
+        glGenerateMipmap(GL_TEXTURE_2D); //Genrate MipMap
+    } else {
+        std::cout << "Failed to load texture" << std::endl;
+    }
     stbi_image_free(pixelData);
     return textureName;
 }
@@ -87,14 +105,14 @@ void Viewer::CreateGeometry() {
       single triangle strip */
 
     uint32_t currentIndex = 0;
-    for(float x = 0.0;x<PATCH_SIZE;x+=1.0f){
-        for(float z = 0.0;z<PATCH_SIZE;z+=1.0f){
-            if(currentIndex >= PATCH_SIZE){
+    for (float x = 0.0; x < PATCH_SIZE; x += 1.0f) {
+        for (float z = 0.0; z < PATCH_SIZE; z += 1.0f) {
+            if (currentIndex >= PATCH_SIZE) {
                 indices.push_back(currentIndex - PATCH_SIZE);
             }
             indices.push_back(currentIndex);
             currentIndex++;
-            positions.push_back(Eigen::Vector4f{x,0.0f,z,1.0f});
+            positions.push_back(Eigen::Vector4f{x, 0.0f, z, 1.0f});
         }
         indices.push_back(UINT32_MAX); //UINT32_MAX is our restart index
     }
@@ -188,8 +206,12 @@ void Viewer::drawContents() {
     terrainShader.setUniform("mvp", mvp);
     terrainShader.setUniform("cameraPos", cameraPosition, false);
     /* Task: Render the terrain */
+    /* Bind Texture */
+    glBindTexture(GL_TEXTURE_2D, grassTexture);
+
+
     /* Draw Triangle Strips*/
-    glDrawElements(GL_TRIANGLE_STRIP,terrainIndices.bufferSize(),GL_UNSIGNED_INT,(void*)nullptr);
+    glDrawElements(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) nullptr);
 
     //Render text
     nvgBeginFrame(mNVGContext, (float) width(), (float) height(), mPixelRatio);

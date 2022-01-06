@@ -11,10 +11,10 @@ uniform vec3 cameraPos;
 
 
 uniform sampler2D background;
+uniform sampler2D textureSampler;
 uniform vec2 screenSize;
 
-const vec3 dirToLight = normalize(vec3(1, 3, 1));	
-
+const vec3 dirToLight = normalize(vec3(1, 3, 1));
 //Calculates the visible surface color based on the Blinn-Phong illumination model
 vec4 calculateLighting(vec4 materialColor, float specularIntensity, vec3 normalizedNormal, vec3 directionToViewer)
 {
@@ -30,13 +30,17 @@ vec4 getBackgroundColor()
 	return texture(background, gl_FragCoord.xy / screenSize);
 }
 
+vec4 getTextureColor(){
+	return texture(textureSampler, mod(gl_FragCoord.xz,255/10));
+}
+
 void main()
 {
 	//surface geometry
 	vec3 dirToViewer = vec3(0, 1, 0);
 
 	//material properties	
-	color = vec4(0.6, 0.6, 0.6, 1);
+	color = getTextureColor();
 	float specular = 0;
 
 	
