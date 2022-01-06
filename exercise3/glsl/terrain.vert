@@ -9,6 +9,7 @@ in vec4 position;
 
 uniform mat4 mvp;
 out vec3 normal;
+out vec2 fragCoord;
 //Returns the height of the procedural terrain at a given xz position
 float getTerrainHeight(vec2 p);
 
@@ -19,6 +20,7 @@ void main()
 	vec4 heightPosition = position + vec4(0,getTerrainHeight(position.xz),0,0);
 	gl_Position = mvp * (heightPosition);
 	normal = normalize(heightPosition.xyz);
+	fragCoord = heightPosition.xz;
 }
 
 //source: https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83

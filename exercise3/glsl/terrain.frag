@@ -7,6 +7,7 @@
 
 out vec4 color;
 in vec3 normal;
+in vec2 fragCoord;
 uniform vec3 cameraPos;
 
 
@@ -31,7 +32,7 @@ vec4 getBackgroundColor()
 }
 
 vec4 getTextureColor(){
-	return texture(textureSampler, mod(gl_FragCoord.xz,255/10));
+	return texture(textureSampler, mod(fragCoord,255/10));
 }
 
 void main()

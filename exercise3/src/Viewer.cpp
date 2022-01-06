@@ -64,18 +64,17 @@ void Viewer::LoadShaders() {
 
 GLuint CreateTexture(const unsigned char *fileData, size_t fileLength, bool repeat = true) {
     GLuint textureName;
-    GLuint wrapMode = GL_REPEAT;
+    GLuint wrapMode = GL_MIRRORED_REPEAT;
     if (!repeat) {
         wrapMode = GL_CLAMP_TO_BORDER;
     }
     glGenTextures(1, &textureName);
     glBindTexture(GL_TEXTURE_2D, textureName);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); //minification Filter
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); //magnification Filter
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //minification Filter
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //magnification Filter
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode); //WrapMode
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
-
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, wrapMode);
     int textureWidth, textureHeight, textureChannels;
     unsigned char *pixelData = stbi_load_from_memory(fileData, (int) fileLength, &textureWidth, &textureHeight,
                                                      &textureChannels, 3);

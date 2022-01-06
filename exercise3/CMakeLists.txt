@@ -1,5 +1,5 @@
 set(GLSL_FILES	sky.vert sky.frag
-				terrain.vert terrain.frag)
+		terrain.vert terrain.frag)
 
 ProcessGLSLFiles(GLSL_FILES)
 
@@ -12,20 +12,20 @@ set(bin2c_cmdline
 		"-DINPUT_FILES=${texture_string}"
 		-P "${NANOGUI_DIR}/resources/bin2c.cmake")
 
-	add_custom_command(
-	  OUTPUT textures.cpp textures.h
-	  COMMAND ${CMAKE_COMMAND} ARGS ${bin2c_cmdline}
-	  DEPENDS ${TEXTURE_FILES}
-	  COMMENT "Running bin2c"
-	  PRE_BUILD VERBATIM)
+add_custom_command(
+		OUTPUT textures.cpp textures.h
+		COMMAND ${CMAKE_COMMAND} ARGS ${bin2c_cmdline}
+		DEPENDS ${TEXTURE_FILES}
+		COMMENT "Running bin2c"
+		PRE_BUILD VERBATIM)
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 add_executable(Exercise3 MACOSX_BUNDLE
-	glsl.cpp
-	textures.cpp
-	src/main.cpp
-	src/Viewer.cpp include/Viewer.h
-	${GLSL_FILES})
+		glsl.cpp
+		textures.cpp
+		src/main.cpp
+		src/Viewer.cpp include/Viewer.h
+		${GLSL_FILES})
 
 target_link_libraries(Exercise3 CG1Common ${LIBS})
