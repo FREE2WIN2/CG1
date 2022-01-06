@@ -30,7 +30,7 @@ void main(void)
     for (i;i<=imax;i++){
         float x = (z.x * z.x - z.y * z.y) + seed.x;
         float y = (z.y * z.x + z.x * z.y) + seed.y;
-        if ((x * x )+ (y * y) > 4.0f){
+        if ((x * x ) + (y * y) > 4.0f){
             break;
         }
         z.x = x;
