@@ -7,12 +7,15 @@
 
 out vec4 color;
 in vec3 normal;
-in vec2 fragCoord;
+in vec3 fragCoord;
 uniform vec3 cameraPos;
 
 
 uniform sampler2D background;
-uniform sampler2D textureSampler;
+uniform sampler2D grassSampler;
+uniform sampler2D rockSampler;
+uniform sampler2D alphaSampler;
+
 uniform vec2 screenSize;
 
 const vec3 dirToLight = normalize(vec3(1, 3, 1));
@@ -31,9 +34,28 @@ vec4 getBackgroundColor()
     return texture(background, gl_FragCoord.xy / screenSize);
 }
 
-vec4 getTextureColor()
+float getSlope(){
+    return 1.0f - normal.y;
+}
+
+vec4 getTexture(sampler2D sampler0){
+    return texture(sampler0, fragCoord.xz / 255 * 10);
+}
+
+vec4 getTexture()
 {
-    return texture(textureSampler, mod(fragCoord / 255 * 10,1));
+    float slope = getSlope();
+    vec4 grassTexture = getTexture(grassSampler);
+    vec4 rockTexture = getTexture(rockSampler);
+
+    if (slope < 0.2){
+        return grassTexture;
+    }
+    if (slope < 0.7){
+        float blend = (slope - 0.2) * 2.0f;
+        return mix(rockTexture,grassTexture, blend);
+    }
+    return rockTexture;
 }
 
 void main()
@@ -42,7 +64,7 @@ void main()
     vec3 dirToViewer = vec3(0, 1, 0);
 
     //material properties
-    color = getTextureColor();
+    color = getTexture();
     float specular = 0;
 
 

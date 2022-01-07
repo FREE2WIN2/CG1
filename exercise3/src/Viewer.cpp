@@ -205,9 +205,16 @@ void Viewer::drawContents() {
     terrainShader.setUniform("mvp", mvp);
     terrainShader.setUniform("cameraPos", cameraPosition, false);
     /* Task: Render the terrain */
-    /* Bind Texture */
+    /* Bind Textures */
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, grassTexture);
-
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, rockTexture);
+    //glActiveTexture(GL_TEXTURE2);
+   // glBindTexture(GL_TEXTURE_2D, alphaMap);
+    terrainShader.setUniform("grassSampler",0);
+    terrainShader.setUniform("rockSampler",1);
+    //terrainShader.setUniform("alphaSampler",2);
 
     /* Draw Triangle Strips*/
     glDrawElements(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) nullptr);
