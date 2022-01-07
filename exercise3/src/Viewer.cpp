@@ -210,12 +210,17 @@ void Viewer::drawContents() {
     glBindTexture(GL_TEXTURE_2D, grassTexture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, rockTexture);
-    //glActiveTexture(GL_TEXTURE2);
-   // glBindTexture(GL_TEXTURE_2D, alphaMap);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, alphaMap);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, roadColorTexture);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, roadSpecularMap);
     terrainShader.setUniform("grassSampler",0);
     terrainShader.setUniform("rockSampler",1);
-    //terrainShader.setUniform("alphaSampler",2);
-
+    terrainShader.setUniform("alphaSampler",2);
+    terrainShader.setUniform("roadSampler",3);
+    terrainShader.setUniform("roadSpecularSampler",4);
     /* Draw Triangle Strips*/
     glDrawElements(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) nullptr);
 
