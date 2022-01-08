@@ -56,13 +56,15 @@ vec4 getTexture()
     vec4 rockTexture = getTexture(rockSampler);
 
     vec4 alphaTexture = getAlphaColor();
-    vec4 color = rockTexture;
+    vec4 color;
 
-    if (slope < 0.2){
+    if (slope <= 0.2){
         color = grassTexture;
-    } else if (slope < 0.7){
-        float blend = (slope - 0.2) * 2.0f;
-        color = mix(rockTexture, grassTexture, blend);
+    } else if (slope > 0.2 && slope < 0.7){
+        float blend = (slope - 0.2) * 1.9f;
+        color = mix(rockTexture,grassTexture, blend);
+    }else{
+        color = rockTexture;
     }
     if(alphaTexture.x == 0){
         return color; //faster

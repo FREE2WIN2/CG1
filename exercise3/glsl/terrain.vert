@@ -4,16 +4,46 @@
 // Copyright (C) CGV TU Dresden - All Rights Reserved
 
 in vec4 position;
-
+in vec2 offset;
 
 
 uniform mat4 mvp;
 out vec3 normal;
 out vec3 fragCoord;
+out vec3 tangent;
+out vec3 bitangent;
 //Returns the height of the procedural terrain at a given xz position
 float getTerrainHeight(vec2 p);
 
-vec3 calcNormal(vec3 vertice){
+void calcNormal(vec3 vertice){
+/*
+	vec3 neighbour1 = vertice + vec3(sampleOffset,0,0);
+	vec3 neighbour2 = vertice + vec3(0,0,sampleOffset);
+	neighbour1.y = getTerrainHeight(neighbour1.xz);
+	neighbour2.y = getTerrainHeight(neighbour2.xz);
+
+
+	vec2 uv = 255 / vertice.xz ;
+	vec2 uvNeighbour1 = 255 / neighbour1.xz ;
+	vec2 uvNeighbour2 = 255 / neighbour2.xz;
+
+	vec3 deltaPos1 = neighbour1 - vertice;
+	vec3 deltaPos2 = neighbour2 - vertice;
+	vec2 deltaUV1 = uvNeighbour1 - uv;
+	vec2 deltaUV2 = uvNeighbour2 - uv;
+
+	float x = neighbour1.y*neighbour2.z - neighbour1.z*neighbour2.y; // x
+	float y = neighbour1.z * neighbour2.x - neighbour1.x*neighbour2.z;
+	float z = neighbour1.x * neighbour2.y - neighbour1.y*neighbour2.x;
+	normal = normalize(vec3(x,y,z));
+
+	float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+	tangent = normalize((deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y)*r);
+	bitangent =  normalize((deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r);
+
+	normal = normalize(cross(tangent,bitangent));
+		*/
+
 	float sampleOffset = 0.1f;
 	float x = vertice.x;
 	float z = vertice.z;
@@ -21,16 +51,20 @@ vec3 calcNormal(vec3 vertice){
 	float hR = getTerrainHeight(vec2(x + sampleOffset, z));
 	float hD = getTerrainHeight(vec2(x, z - sampleOffset));
 	float hU = getTerrainHeight(vec2(x, z + sampleOffset));
-	return normalize(vec3(hL - hR, sampleOffset * 2, hD - hU));
+	normal = normalize(vec3(hL - hR, sampleOffset * 2, hD - hU));
+
 }
+
 
 
 
 void main()
 {
-	vec4 heightPosition = position + vec4(0,getTerrainHeight(position.xz),0,0);
+
+	vec4 heightPosition = position + vec4(offset.x,0,offset.y,0);
+	heightPosition.y = getTerrainHeight(heightPosition.xz);
 	gl_Position = mvp * (heightPosition);
-	normal = calcNormal(heightPosition.xyz);
+	calcNormal(heightPosition.xyz);
 	fragCoord = heightPosition.xyz;
 }
 

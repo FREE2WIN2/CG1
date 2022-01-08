@@ -111,7 +111,7 @@ void Viewer::CreateGeometry() {
             }
             indices.push_back(currentIndex);
             currentIndex++;
-            positions.push_back(Eigen::Vector4f{x, 0.0f, z, 1.0f});
+            positions.emplace_back(x, 0.0f, z, 1.0f);
         }
         indices.push_back(UINT32_MAX); //UINT32_MAX is our restart index
     }
@@ -123,6 +123,11 @@ void Viewer::CreateGeometry() {
     terrainPositions.uploadData(positions).bindToAttribute("position");
     terrainIndices.uploadData((uint32_t) indices.size() * sizeof(uint32_t), indices.data());
 
+    offsetBuffer.bind();
+    std::vector<Eigen::Vector2f> offset;
+    offset.emplace_back(0,0);
+    offsetBuffer.uploadData(offset).bindToAttribute("offset");
+    glVertexAttribDivisor(terrainShader.attrib("offset"), offset.size());
 
 
     //textures
@@ -156,13 +161,14 @@ void Viewer::RenderSky() {
 
 void CalculateViewFrustum(const Eigen::Matrix4f &mvp, Eigen::Vector4f *frustumPlanes,
                           nse::math::BoundingBox<float, 3> &bbox) {
+    std::cout << "calculate Frustum planes!" << std::endl;
     frustumPlanes[0] = (mvp.row(3) + mvp.row(0)).transpose();
     frustumPlanes[1] = (mvp.row(3) - mvp.row(0)).transpose();
     frustumPlanes[2] = (mvp.row(3) + mvp.row(1)).transpose();
     frustumPlanes[3] = (mvp.row(3) - mvp.row(1)).transpose();
     frustumPlanes[4] = (mvp.row(3) + mvp.row(2)).transpose();
     frustumPlanes[5] = (mvp.row(3) - mvp.row(2)).transpose();
-
+    std::cout << "Frustum planes calculated!" << std::endl;
     Eigen::Matrix4f invMvp = mvp.inverse();
     bbox.reset();
     for (int x = -1; x <= 1; x += 2)
@@ -172,6 +178,8 @@ void CalculateViewFrustum(const Eigen::Matrix4f &mvp, Eigen::Vector4f *frustumPl
                 corner /= corner.w();
                 bbox.expand(corner.head<3>());
             }
+
+    std::cout << "finished with planes!" << std::endl;
 }
 
 bool
@@ -191,8 +199,44 @@ void Viewer::drawContents() {
     camera().ComputeCameraMatrices(view, proj);
 
     Eigen::Matrix4f mvp = proj * view;
-    Eigen::Vector3f cameraPosition = view.inverse().col(3).head<3>();
+
+
+
     int visiblePatches = 0;
+
+    /* offset buffer */
+
+    Eigen::Vector4f frustumPlanes;
+    nse::math::BoundingBox<float, 3> bbox;
+    CalculateViewFrustum(proj * view, &frustumPlanes, bbox);
+
+    /*unsigned int bboxMinX = (int) ceil(bbox.min.x()) - 1;
+    unsigned int bboxMinZ = (int) ceil(bbox.min.z()) - 1;
+    unsigned int bboxMaxX = (int) ceil(bbox.max.x()) + 1;
+    unsigned int bboxMaxZ = (int) ceil(bbox.max.z()) + 1;
+    unsigned int minX = (bboxMinX % PATCH_SIZE - 1) * PATCH_SIZE;
+    unsigned int minZ = (bboxMinZ % PATCH_SIZE - 1) * PATCH_SIZE;
+    unsigned int maxX = (bboxMaxX % PATCH_SIZE - 1) * PATCH_SIZE;
+    unsigned int maxZ = (bboxMaxZ % PATCH_SIZE - 1) * PATCH_SIZE;
+
+   /* for (unsigned int xOffset = minX; xOffset <= maxX; xOffset += PATCH_SIZE) {
+        for (unsigned int zOffset = minZ; zOffset <= maxZ; zOffset += PATCH_SIZE) {
+            Eigen::Vector3f min = {(float) xOffset, 0, (float) zOffset};
+            Eigen::Vector3f max = {(float) xOffset + PATCH_SIZE, 15, (float) zOffset + PATCH_SIZE};
+            std::cout << "xOffset: " << xOffset << " zOffset: " << zOffset << std::endl;
+            //    for (int i = 0; i < frustumPlanes.size(); i++) {
+            //       Eigen::Vector4f plane;
+            //       plane = frustumPlanes[i]
+            //         if (IsBoxCompletelyBehindPlane(min, max, plane)) {
+            //visiblePatches++;
+            // offset.emplace_back(xOffset, zOffset);
+
+            //      }
+            //  }
+        }
+    }*/
+
+    Eigen::Vector3f cameraPosition = view.inverse().col(3).head<3>();
 
     RenderSky();
 
@@ -205,7 +249,9 @@ void Viewer::drawContents() {
     terrainShader.setUniform("mvp", mvp);
     terrainShader.setUniform("cameraPos", cameraPosition, false);
     /* Task: Render the terrain */
-    /* Bind Textures */
+
+
+/* Bind Textures */
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, grassTexture);
     glActiveTexture(GL_TEXTURE1);
@@ -216,16 +262,19 @@ void Viewer::drawContents() {
     glBindTexture(GL_TEXTURE_2D, roadColorTexture);
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, roadSpecularMap);
-    terrainShader.setUniform("grassSampler",0);
-    terrainShader.setUniform("rockSampler",1);
-    terrainShader.setUniform("alphaSampler",2);
-    terrainShader.setUniform("roadSampler",3);
-    terrainShader.setUniform("roadSpecularSampler",4);
-    /* Draw Triangle Strips*/
-    glDrawElements(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) nullptr);
+    terrainShader.setUniform("grassSampler", 0);
+    terrainShader.setUniform("rockSampler", 1);
+    terrainShader.setUniform("alphaSampler", 2);
+    terrainShader.setUniform("roadSampler", 3);
+    terrainShader.setUniform("roadSpecularSampler", 4);
+/* Draw Triangle Strips*/
+    glDrawElementsInstanced(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) nullptr,
+                            offsetBuffer.bufferSize());
 
-    //Render text
-    nvgBeginFrame(mNVGContext, (float) width(), (float) height(), mPixelRatio);
+//Render text
+    nvgBeginFrame(mNVGContext, (float) width(), (float) height(), mPixelRatio
+
+    );
     std::string text = "Patches visible: " + std::to_string(visiblePatches);
     nvgText(mNVGContext, 10, 20, text.c_str(), nullptr);
     nvgEndFrame(mNVGContext);
