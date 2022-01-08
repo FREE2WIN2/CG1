@@ -16,10 +16,11 @@ public:
 
 	void LoadShaders();
 	void CreateGeometry();
-
 	void drawContents();	
 	bool resizeEvent(const Eigen::Vector2i&);
-
+    void renderWater(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition);
+    void renderTerrain(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition);
+    void calculcateOffsets(Eigen::Matrix4f matrix);
 private:	
 
 	void RenderSky();
@@ -34,9 +35,16 @@ private:
 	nse::gui::GLBuffer terrainPositions;
 	nse::gui::GLBuffer terrainIndices;
 
-	GLuint grassTexture, rockTexture, roadColorTexture, roadNormalMap, roadSpecularMap, alphaMap;
+    nse::gui::GLShader waterShader;
+    nse::gui::GLVertexArray waterVAO;
+    nse::gui::GLBuffer waterPositionBuffer;
+    nse::gui::GLBuffer waterIndexBuffer;
+
+	GLuint grassTexture, rockTexture, roadColorTexture, roadNormalMap, roadSpecularMap, alphaMap, waterTexture;
 
 	nse::gui::GLBuffer offsetBuffer;
 
 	GLuint backgroundFBO, backgroundTexture;
+
+
 };
