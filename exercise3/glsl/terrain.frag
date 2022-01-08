@@ -8,6 +8,8 @@
 out vec4 color;
 in vec3 normal;
 in vec3 fragCoord;
+in vec3 tangent;
+in vec3 bitangent;
 uniform vec3 cameraPos;
 
 
@@ -17,10 +19,12 @@ uniform sampler2D rockSampler;
 uniform sampler2D alphaSampler;
 uniform sampler2D roadSampler;
 uniform sampler2D roadSpecularSampler;
+uniform sampler2D normalSampler;
 uniform vec2 screenSize;
 
 const vec3 dirToLight = normalize(vec3(1, 3, 1));
 float specular = 0;
+vec3 nnormal = normal;
 //Calculates the visible surface color based on the Blinn-Phong illumination model
 vec4 calculateLighting(vec4 materialColor, float specularIntensity, vec3 normalizedNormal, vec3 directionToViewer)
 {
@@ -31,9 +35,10 @@ vec4 calculateLighting(vec4 materialColor, float specularIntensity, vec3 normali
     return color;
 }
 
-vec4 getAlphaColor(){
-    return texture(alphaSampler, mod(fragCoord.xz / 255, 1));
+vec4 getRoadTexture(sampler2D sampler0){
+    return texture(sampler0, mod(fragCoord.xz / 255, 1));
 }
+
 
 vec4 getBackgroundColor()
 {
@@ -48,6 +53,14 @@ vec4 getTexture(sampler2D sampler0){
     return texture(sampler0, mod(fragCoord.xz / 255 * 10, 1));
 }
 
+
+void readNormal(){
+    vec3 normalTexture = getTexture(normalSampler).xyz;
+    vec3 tanNormal = 2 * normalTexture - 1;
+    mat3 MT = inverse(mat3(tangent,bitangent,normal));
+    nnormal =  normalize(tanNormal * MT);
+}
+
 vec4 getTexture()
 {
 
@@ -55,38 +68,35 @@ vec4 getTexture()
     vec4 grassTexture = getTexture(grassSampler);
     vec4 rockTexture = getTexture(rockSampler);
 
-    vec4 alphaTexture = getAlphaColor();
+    vec4 alphaTexture = getRoadTexture(alphaSampler);
     vec4 color;
 
-    if (slope <= 0.2){
-        color = grassTexture;
-    } else if (slope > 0.2 && slope < 0.7){
-        float blend = (slope - 0.2) * 1.9f;
-        color = mix(rockTexture,grassTexture, blend);
-    }else{
-        color = rockTexture;
-    }
-    if(alphaTexture.x == 0){
-        return color; //faster
-    }else{
-        specular = getTexture(roadSpecularSampler).x; //grey
+    float revSlope = 1 - slope;
+    float blend =  min(1, (1- revSlope * revSlope) * 2f);
+    color = mix(grassTexture, rockTexture, blend);
+
+    if (alphaTexture.x >= 0.25){
+        specular = getTexture(roadSpecularSampler).x;//grey
+        readNormal();
     }
     vec4 roadTexture = getTexture(roadSampler);
 
-    return mix(color,roadTexture, alphaTexture.x);
+    return mix(color, roadTexture, alphaTexture.x);
 
 }
+
+
 
 void main()
 {
     //surface geometry
-    vec3 dirToViewer = cameraPos;
+    vec3 dirToViewer = cameraPos - fragCoord;
 
     //material properties
     color = getTexture();
 
     //Calculate light
-    color = calculateLighting(color, specular, normal, dirToViewer);
+    color = calculateLighting(color, specular, nnormal, dirToViewer);
 
 
 }
