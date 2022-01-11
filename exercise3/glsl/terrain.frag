@@ -35,8 +35,12 @@ vec4 calculateLighting(vec4 materialColor, float specularIntensity, vec3 normali
     return color;
 }
 
-vec4 getRoadTexture(sampler2D sampler0){
-    return texture(sampler0, mod(fragCoord.xz / 255, 1));
+vec4 getAlpha(sampler2D sampler0){
+    if (fragCoord.x <= 255 && fragCoord.x >= 0 && fragCoord.z  <= 255 && fragCoord.z >= 0){
+        return texture(sampler0, fragCoord.xz / 255);
+    } else {
+        return texture(sampler0,vec2(2,2));
+    }
 }
 
 
@@ -57,7 +61,7 @@ vec4 getTexture(sampler2D sampler0){
 void readNormal(){
     vec3 normalTexture = getTexture(normalSampler).xyz;
     vec3 tanNormal = 2 * normalTexture - 1;
-    mat3 MT = inverse(mat3(tangent,bitangent,normal));
+    mat3 MT = inverse(mat3(tangent, bitangent, normal));
     nnormal =  normalize(tanNormal * MT);
 }
 
@@ -68,11 +72,11 @@ vec4 getTexture()
     vec4 grassTexture = getTexture(grassSampler);
     vec4 rockTexture = getTexture(rockSampler);
 
-    vec4 alphaTexture = getRoadTexture(alphaSampler);
+    vec4 alphaTexture = getAlpha(alphaSampler);
     vec4 color;
 
     float revSlope = 1 - slope;
-    float blend =  min(1, (1- revSlope * revSlope) * 2f);
+    float blend =  min(1, (1- revSlope * revSlope) * 1.8f);
     color = mix(grassTexture, rockTexture, blend);
 
     if (alphaTexture.x >= 0.25){
@@ -81,11 +85,19 @@ vec4 getTexture()
     }
     vec4 roadTexture = getTexture(roadSampler);
 
-    return mix(color, roadTexture, alphaTexture.x);
-
+    color = mix(color, roadTexture, alphaTexture.x);
+    return color;
 }
 
-
+vec4 calculateFog(vec4 color, int fogMinDist, int fogMaxDist){
+    /* fog */
+    float dist = length(fragCoord - cameraPos);
+    float fogFactor = (fogMaxDist - dist) / (fogMaxDist - fogMinDist);
+    fogFactor = 1- clamp(fogFactor, 0.0, 1.0);
+    vec4 backgroundColor = getBackgroundColor();
+    color = mix(color,backgroundColor,fogFactor);
+    return color;
+}
 
 void main()
 {
@@ -97,6 +109,6 @@ void main()
 
     //Calculate light
     color = calculateLighting(color, specular, nnormal, dirToViewer);
-
+    color = calculateFog(color,500,1000);
 
 }

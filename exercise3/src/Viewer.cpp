@@ -23,7 +23,6 @@ const int WATER_HEIGHT = 3;
 
 std::vector<uint32_t> indices;
 std::vector<uint32_t> waterIndices;
-std::vector<Eigen::Vector2f> offset;
 
 Viewer::Viewer()
         : AbstractViewer("CG1 Exercise 3"),
@@ -91,7 +90,7 @@ GLuint CreateTexture(const unsigned char *fileData, size_t fileLength, bool repe
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureWidth, textureHeight, 0, GL_RGB,
                      GL_UNSIGNED_BYTE,
                      pixelData); //create Texture
-        glGenerateMipmap(GL_TEXTURE_2D); //Genrate MipMap
+        glGenerateMipmap(GL_TEXTURE_2D); //Generate MipMap
     } else {
         std::cout << "Failed to load texture" << std::endl;
     }
@@ -141,11 +140,11 @@ void Viewer::CreateGeometry() {
     terrainIndices.uploadData((uint32_t) indices.size() * sizeof(uint32_t), indices.data());
 
     //water
-    //waterVAO.generate();
-    //waterVAO.bind();
-    // waterShader.bind();
-    // waterPositionBuffer.uploadData(waterPositions).bindToAttribute("position");
-    // waterIndexBuffer.uploadData((uint32_t) indices.size() * sizeof(uint32_t), waterIndices.data());
+    waterVAO.generate();
+    waterVAO.bind();
+     waterShader.bind();
+     waterPositionBuffer.uploadData(waterPositions).bindToAttribute("position");
+     waterIndexBuffer.uploadData((uint32_t) indices.size() * sizeof(uint32_t), waterIndices.data());
 
     //textures
     grassTexture = CreateTexture((unsigned char *) grass_jpg, grass_jpg_size);
@@ -163,16 +162,21 @@ void Viewer::renderWater(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition) 
     waterShader.bind();
     waterShader.setUniform("mvp", mvp);
     waterShader.setUniform("cameraPos", cameraPosition, false);
-    glActiveTexture(GL_TEXTURE5);
+
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, waterTexture);
-    waterShader.setUniform("waterSampler", 5);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, backgroundTexture);
+    waterShader.setUniform("waterSampler", 0);
+    waterShader.setUniform("background", 1);
+    glVertexAttribDivisor(waterShader.attrib("offset"),1);
     glDrawElementsInstanced(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, (void *) nullptr,
-                            offset.size());
+                            offsetBuffer.bufferSize());
 
 }
 
 
-void Viewer::renderTerrain(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition) {
+void Viewer::renderTerrain(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, int visiblePatches) {
 
     terrainShader.bind();
     terrainShader.setUniform("screenSize", Eigen::Vector2f(width(), height()), false);
@@ -194,17 +198,21 @@ void Viewer::renderTerrain(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition
     glBindTexture(GL_TEXTURE_2D, waterTexture);
     glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, roadNormalMap);
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, backgroundTexture);
     terrainShader.setUniform("grassSampler", 0);
     terrainShader.setUniform("rockSampler", 1);
     terrainShader.setUniform("alphaSampler", 2);
     terrainShader.setUniform("roadSampler", 3);
     terrainShader.setUniform("roadSpecularSampler", 4);
     terrainShader.setUniform("normalSampler", 6);
-
+    terrainShader.setUniform("background", 7);
     terrainVAO.bind();
-    glVertexAttribDivisor(terrainShader.attrib("offset"), offset.size());
-    glDrawElementsInstanced(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, (void *) nullptr,
-                            offset.size());
+
+
+    glVertexAttribDivisor(terrainShader.attrib("offset"), 1);
+    glDrawElementsInstanced(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) nullptr,
+                            visiblePatches);
 
 }
 
@@ -274,9 +282,9 @@ void Viewer::drawContents() {
     /* Task: Render the terrain */
 
     int visiblePatches = calculcateOffsets(mvp);
-    // renderWater(mvp, cameraPosition);
+    renderWater(mvp, cameraPosition);
     //render terrain
-    renderTerrain(mvp, cameraPosition);
+    renderTerrain(mvp, cameraPosition, visiblePatches);
 
     //Render text
     nvgBeginFrame(mNVGContext, (float) width(), (float) height(), mPixelRatio);
@@ -287,7 +295,7 @@ void Viewer::drawContents() {
 
 int Viewer::calculcateOffsets(Eigen::Matrix4f mvp) {
     offsetBuffer.bind();
-    offset.clear();
+    std::vector<Eigen::Vector2f> offset;
     int visiblePatches = 0;
 
 
@@ -306,30 +314,33 @@ int Viewer::calculcateOffsets(Eigen::Matrix4f mvp) {
     int maxZ = bboxMaxZ - bboxMaxZ % PATCH_SIZE;
 
 
-    for (int xOffset = minX; xOffset <= maxX; xOffset += PATCH_SIZE) {
-        for (int zOffset = minZ; zOffset <= maxZ; zOffset += PATCH_SIZE) {
+    int steps = PATCH_SIZE - 1;
+    for (int xOffset = minX; xOffset <= maxX; xOffset += steps) {
+        for (int zOffset = minZ; zOffset <= maxZ; zOffset += steps) {
             Eigen::Vector3f min = Eigen::Vector3f((float) xOffset, 0, (float) zOffset);
-            Eigen::Vector3f max = Eigen::Vector3f((float) xOffset + PATCH_SIZE, 15, (float) zOffset + PATCH_SIZE);
-            for (Eigen::Vector4f plane: frustumPlanes) {
-                if (!IsBoxCompletelyBehindPlane(min, max, plane)) {
-                    visiblePatches++;
-                    std::cout << "offset: x:" << xOffset << " z: " << zOffset << std::endl;
-                    offset.emplace_back(xOffset, zOffset);
-                    break;
+            Eigen::Vector3f max = Eigen::Vector3f((float) (xOffset + steps), 15, (float) (zOffset + steps));
+            bool behind = false;
+            for (const Eigen::Vector4f& plane: frustumPlanes) {
+                if (IsBoxCompletelyBehindPlane(min, max, plane)) {
+                    behind = true;
                 }
+            }
+            if(!behind){
+                visiblePatches++;
+                offset.emplace_back(xOffset, zOffset);
             }
         }
     }
 
-  /* Task a*/
+    /* Task a*/
 
     terrainVAO.bind();
     terrainShader.bind();
-    offsetBuffer.uploadData(offset);
-    offsetBuffer.bindToAttribute("offset");
+    offsetBuffer.uploadData(offset).bindToAttribute("offset");
 
-    //waterShader.bind();
-    //glVertexAttribDivisor(waterShader.attrib("offset"), offset.size());
+    waterVAO.bind();
+    waterShader.bind();
+    offsetBuffer.uploadData(offset).bindToAttribute("offset");
 
     return visiblePatches;
 }

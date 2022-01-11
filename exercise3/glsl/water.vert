@@ -5,7 +5,7 @@ in vec2 offset;
 
 uniform mat4 mvp;
 
-out vec4 fragCoord;
+out vec3 fragCoord;
 out float alpha;
 
 float getTerrainHeight(vec2 p);
@@ -15,8 +15,8 @@ void main(){
     float y = getTerrainHeight(offsetPosition.xz);
     //out
     alpha = max(0, min((offsetPosition.y - y) / 4, 1)); // 0 -> 1 at difference of 3 we have alpha = 1
-    fragCoord = offsetPosition;
-    gl_Position = mvp * (fragCoord);
+    fragCoord = offsetPosition.xyz;
+    gl_Position = mvp * (offsetPosition);
 }
 
 float rand(vec2 c)

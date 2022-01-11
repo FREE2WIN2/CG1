@@ -19,7 +19,7 @@ public:
 	void drawContents();	
 	bool resizeEvent(const Eigen::Vector2i&);
     void renderWater(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition);
-    void renderTerrain(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition);
+    void renderTerrain(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition,int visiblePatches);
     int calculcateOffsets(Eigen::Matrix4f matrix);
 private:	
 
