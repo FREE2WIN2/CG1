@@ -1,14 +1,14 @@
 #version 330
 
 in vec3 fragCoord;
-in float alpha;
-
+in vec4 clipSpace;
 uniform vec3 cameraPos;
-uniform sampler2D waterSampler;
 uniform sampler2D background;
+uniform sampler2D reflectionTexture;
+uniform sampler2D refractionTexture;
 uniform vec2 screenSize;
-out vec4 color;
 
+out vec4 color;
 const vec3 dirToLight = normalize(vec3(1, 3, 1));
 
 
@@ -26,10 +26,6 @@ vec4 calculateLighting(vec4 materialColor, float specularIntensity, vec3 normali
     return color;
 }
 
-vec4 getTexture(sampler2D sampler0){
-    return texture(sampler0, mod(fragCoord.xz / 255 * 10, 1));
-}
-
 vec4 calculateFog(vec4 color, int fogMinDist, int fogMaxDist){
     /* fog */
     float dist = length(fragCoord - cameraPos);
@@ -41,10 +37,15 @@ vec4 calculateFog(vec4 color, int fogMinDist, int fogMaxDist){
 }
 
 void main(){
-    color = getTexture(waterSampler);
 
+    vec2 ndc = (gl_FragCoord.xy / gl_FragCoord.w) / 2.0 + 0.5;
+    vec2 refractTexCoords = vec2(ndc.x,ndc.y);
+    vec2 reflectTexCoords = vec2(ndc.x,-ndc.y);
+
+    vec4 reflectColor = texture(reflectionTexture,reflectTexCoords);
+    vec4 refractColor = texture(refractionTexture,refractTexCoords);
+    color = mix(reflectColor,refractColor,0.5);
     color = calculateLighting(color, 0, vec3(0, 1, 0), cameraPos);
     color = calculateFog(color, 500,1000);
 
-    color.a = alpha;
 }

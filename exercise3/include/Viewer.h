@@ -8,6 +8,7 @@
 #include <gui/GLShader.h>
 #include <gui/GLBuffer.h>
 #include <gui/GLVertexArray.h>
+#include "WaterFrameBuffers.h"
 
 class Viewer : public nse::gui::AbstractViewer
 {
@@ -18,8 +19,8 @@ public:
 	void CreateGeometry();
 	void drawContents();	
 	bool resizeEvent(const Eigen::Vector2i&);
-    void renderWater(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition);
-    void renderTerrain(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition,int visiblePatches);
+    void renderWater(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition,int visiblePatches,Eigen::Vector4f clippingPlane);
+    void renderTerrain(Eigen::Matrix4f &mvp,Eigen::Vector3f &cameraPosition,int visiblePatches,Eigen::Vector4f clippingPlane);
     int calculcateOffsets(Eigen::Matrix4f matrix);
 private:	
 
@@ -39,12 +40,14 @@ private:
     nse::gui::GLVertexArray waterVAO;
     nse::gui::GLBuffer waterPositionBuffer;
     nse::gui::GLBuffer waterIndexBuffer;
-
+    WaterFrameBuffers waterFrameBuffers;
 	GLuint grassTexture, rockTexture, roadColorTexture, roadNormalMap, roadSpecularMap, alphaMap, waterTexture;
 
 	nse::gui::GLBuffer offsetBuffer;
 
 	GLuint backgroundFBO, backgroundTexture;
 
+    GLuint reflectionFBO;
+    GLuint refractionFBO;
 
 };

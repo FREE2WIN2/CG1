@@ -3,11 +3,13 @@
 // chair of the TU Dresden. Do not distribute! 
 // Copyright (C) CGV TU Dresden - All Rights Reserved
 
-in vec4 position;
+layout (location = 0) in vec4 position;
 in vec2 offset;
 
 
 uniform mat4 mvp;
+uniform vec4 plane;
+
 out vec3 normal;
 out vec3 fragCoord;
 out vec3 tangent;
@@ -45,6 +47,7 @@ void main()
 	gl_Position = mvp * (heightPosition);
 	calcNormal(heightPosition.xyz);
 	fragCoord = heightPosition.xyz;
+	gl_ClipDistance[0] = dot(heightPosition,plane);
 }
 
 //source: https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83

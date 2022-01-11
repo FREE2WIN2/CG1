@@ -25,6 +25,7 @@ add_executable(Exercise3 MACOSX_BUNDLE
 		textures.cpp
 		src/main.cpp
 		src/Viewer.cpp include/Viewer.h
+		src/WaterFrameBuffers.cpp include/WaterFrameBuffers.h
 		${GLSL_FILES})
 
 target_link_libraries(Exercise3 CG1Common ${LIBS})

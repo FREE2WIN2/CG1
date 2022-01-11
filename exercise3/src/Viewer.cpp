@@ -28,7 +28,7 @@ Viewer::Viewer()
         : AbstractViewer("CG1 Exercise 3"),
           terrainPositions(nse::gui::VertexBuffer), terrainIndices(nse::gui::IndexBuffer),
           waterPositionBuffer(nse::gui::VertexBuffer), waterIndexBuffer(nse::gui::IndexBuffer),
-          offsetBuffer(nse::gui::VertexBuffer) {
+          offsetBuffer(nse::gui::VertexBuffer), waterFrameBuffers() {
     LoadShaders();
     CreateGeometry();
 
@@ -142,9 +142,9 @@ void Viewer::CreateGeometry() {
     //water
     waterVAO.generate();
     waterVAO.bind();
-     waterShader.bind();
-     waterPositionBuffer.uploadData(waterPositions).bindToAttribute("position");
-     waterIndexBuffer.uploadData((uint32_t) indices.size() * sizeof(uint32_t), waterIndices.data());
+    waterShader.bind();
+    waterPositionBuffer.uploadData(waterPositions).bindToAttribute("position");
+    waterIndexBuffer.uploadData((uint32_t) indices.size() * sizeof(uint32_t), waterIndices.data());
 
     //textures
     grassTexture = CreateTexture((unsigned char *) grass_jpg, grass_jpg_size);
@@ -156,27 +156,37 @@ void Viewer::CreateGeometry() {
     waterTexture = CreateTexture((unsigned char *) water_jpg, water_jpg_size, true, false);
 }
 
-void Viewer::renderWater(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition) {
+void Viewer::renderWater(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, int visiblePatches,
+                         Eigen::Vector4f clippingPlane) {
 
     waterVAO.bind();
+
+
     waterShader.bind();
+
     waterShader.setUniform("mvp", mvp);
     waterShader.setUniform("cameraPos", cameraPosition, false);
+    waterShader.setUniform("plane", clippingPlane);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, waterTexture);
-    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, backgroundTexture);
-    waterShader.setUniform("waterSampler", 0);
-    waterShader.setUniform("background", 1);
-    glVertexAttribDivisor(waterShader.attrib("offset"),1);
-    glDrawElementsInstanced(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, (void *) nullptr,
-                            offsetBuffer.bufferSize());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, waterFrameBuffers.getReflectionTexture());
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, waterFrameBuffers.getRefractionTexture());
+    waterShader.setUniform("plane", clippingPlane);
+    waterShader.setUniform("background", 0);
+    waterShader.setUniform("reflectionTexture", 1);
+    waterShader.setUniform("refractionTexture", 2);
 
+    glVertexAttribDivisor(waterShader.attrib("offset"), 1);
+    glDrawElementsInstanced(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, (void *) nullptr,
+                            visiblePatches);
 }
 
 
-void Viewer::renderTerrain(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, int visiblePatches) {
+void Viewer::renderTerrain(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, int visiblePatches,
+                           Eigen::Vector4f clippingPlane) {
 
     terrainShader.bind();
     terrainShader.setUniform("screenSize", Eigen::Vector2f(width(), height()), false);
@@ -209,9 +219,10 @@ void Viewer::renderTerrain(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition
     terrainShader.setUniform("background", 7);
     terrainVAO.bind();
 
+    terrainShader.setUniform("plane", clippingPlane);
 
     glVertexAttribDivisor(terrainShader.attrib("offset"), 1);
-    glDrawElementsInstanced(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) nullptr,
+    glDrawElementsInstanced(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) 0,
                             visiblePatches);
 
 }
@@ -278,15 +289,37 @@ void Viewer::drawContents() {
     RenderSky();
 
     glEnable(GL_DEPTH_TEST);
-
-    /* Task: Render the terrain */
+    glEnable(GL_CLIP_DISTANCE0);
 
     int visiblePatches = calculcateOffsets(mvp);
-    renderWater(mvp, cameraPosition);
-    //render terrain
-    renderTerrain(mvp, cameraPosition, visiblePatches);
 
-    //Render text
+    /* reflection */
+    waterFrameBuffers.bindReflectionFrameBuffer();
+    float distance = 2 * (cameraPosition.y() - WATER_HEIGHT);
+    Eigen::Matrix4f reflectionView = view;
+    reflectionView(2, 1) -= distance;
+    reflectionView(1, 0) = -reflectionView(2, 1);
+    reflectionView(1, 1) = -reflectionView(2, 1);
+    reflectionView(1, 2) = -reflectionView(2, 1);
+    reflectionView(1, 3) = -reflectionView(2, 1);
+    Eigen::Matrix4f reflectionMvp = reflectionView * proj;
+    renderTerrain(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, 1, 0, -WATER_HEIGHT));
+    glFinish();
+    /* refraction */
+    waterFrameBuffers.bindRefractionFrameBuffer();
+    renderTerrain(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, WATER_HEIGHT));
+    glFinish();
+
+
+/* Render */
+    waterFrameBuffers.unbindCurrentFrameBuffer();
+    glDisable(GL_CLIP_DISTANCE0);
+    glViewport(0, 0, width(), height());
+    renderWater(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, 15));
+    renderTerrain(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, 15));
+
+
+//Render text
     nvgBeginFrame(mNVGContext, (float) width(), (float) height(), mPixelRatio);
     std::string text = "Patches visible: " + std::to_string(visiblePatches);
     nvgText(mNVGContext, 10, 20, text.c_str(), nullptr);
@@ -320,12 +353,12 @@ int Viewer::calculcateOffsets(Eigen::Matrix4f mvp) {
             Eigen::Vector3f min = Eigen::Vector3f((float) xOffset, 0, (float) zOffset);
             Eigen::Vector3f max = Eigen::Vector3f((float) (xOffset + steps), 15, (float) (zOffset + steps));
             bool behind = false;
-            for (const Eigen::Vector4f& plane: frustumPlanes) {
+            for (const Eigen::Vector4f &plane: frustumPlanes) {
                 if (IsBoxCompletelyBehindPlane(min, max, plane)) {
                     behind = true;
                 }
             }
-            if(!behind){
+            if (!behind) {
                 visiblePatches++;
                 offset.emplace_back(xOffset, zOffset);
             }
