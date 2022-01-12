@@ -1,6 +1,7 @@
 
 
 #include <nanogui/widget.h>
+#include <iostream>
 #include "WaterFrameBuffers.h"
 
 const int REFLECTION_WIDTH = 320;
@@ -58,6 +59,9 @@ void WaterFrameBuffers::initialiseReflectionFrameBuffer() {
     reflectionFrameBuffer = createFrameBuffer();
     reflectionTexture = createTextureAttachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
     reflectionDepthBuffer = createDepthBufferAttachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
+    auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Warning: Background framebuffer is not complete: " << fboStatus << std::endl;
     unbindCurrentFrameBuffer();
 }
 
@@ -66,6 +70,9 @@ void WaterFrameBuffers::initialiseRefractionFrameBuffer() {
     refractionFrameBuffer = createFrameBuffer();
     refractionTexture = createTextureAttachment(REFRACTION_WIDTH, REFRACTION_HEIGHT);
     refractionDepthTexture = createDepthTextureAttachment(REFRACTION_WIDTH, REFRACTION_HEIGHT);
+    auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Warning: Background framebuffer is not complete: " << fboStatus << std::endl;
     unbindCurrentFrameBuffer();
 }
 
@@ -85,6 +92,7 @@ GLuint WaterFrameBuffers::createFrameBuffer() {
     //create the framebuffer
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
     //indicate that we will always render to color attachment 0
+
     return frameBuffer;
 }
 
@@ -92,12 +100,11 @@ GLuint WaterFrameBuffers::createTextureAttachment(int width, int height) {
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                         texture, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
+                 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
     return texture;
 }
 
@@ -105,13 +112,12 @@ GLuint WaterFrameBuffers::createDepthTextureAttachment(int width, int height) {
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0,
-                 GL_DEPTH_COMPONENT32, width, height,
-                 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                         texture, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0,
+                 GL_DEPTH_COMPONENT32, width, height,
+                 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D, texture, 0);
     return texture;
 }
 

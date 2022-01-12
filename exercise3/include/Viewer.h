@@ -24,7 +24,7 @@ public:
     int calculcateOffsets(Eigen::Matrix4f matrix);
 private:	
 
-	void RenderSky();
+	void RenderSky(bool blit);
 
 	Eigen::Matrix4f view, proj;
 
