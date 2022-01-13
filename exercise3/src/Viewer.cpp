@@ -19,7 +19,7 @@
 #include "textures.h"
 
 const uint32_t PATCH_SIZE = 256; //number of vertices along one side of the terrain patch
-const int WATER_HEIGHT = 3;
+const int WATER_HEIGHT = 4;
 
 std::vector<uint32_t> indices;
 std::vector<uint32_t> waterIndices;
@@ -198,7 +198,6 @@ void Viewer::renderWater(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, 
     glVertexAttribDivisor(waterShader.attrib("offset"), 1);
     glDrawElementsInstanced(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, (void *) nullptr,
                             visiblePatches);
-    std::cout <<"afterWAter" << std::endl;
 }
 
 
