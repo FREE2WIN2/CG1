@@ -171,9 +171,7 @@ void Viewer::renderWater(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, 
     waterShader.setUniform("mvp", mvp);
     waterShader.setUniform("cameraPos", cameraPosition, false);
     waterShader.setUniform("plane", clippingPlane);
-    std::cout <<"time: "<<  (getCurrentTime() - startTime) << std::endl;
-    waterShader.setUniform("time", (int)(getCurrentTime() - startTime) / 30);
-    std::cout <<"afterTime" << std::endl;
+    waterShader.setUniform("time", (int)(getCurrentTime() - startTime)/20);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, backgroundTexture);
     glActiveTexture(GL_TEXTURE1);
