@@ -2,7 +2,8 @@ set(GLSL_FILES	sky.vert sky.frag terrain.vert terrain.frag water.vert water.frag
 
 ProcessGLSLFiles(GLSL_FILES)
 
-set(TEXTURE_FILES grass.jpg rock.jpg roadColor.jpg roadNormals.jpg roadSpecular.jpg alpha.jpg water.jpg)
+set(TEXTURE_FILES grass.jpg rock.jpg roadColor.jpg roadNormals.jpg roadSpecular.jpg alpha.jpg water.jpg WaterNormal.jpg
+		WaterSpecular.jpg Waterwave.jpg)
 PREPEND(TEXTURE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/" ${TEXTURE_FILES})
 JOIN("${TEXTURE_FILES}" "," texture_string)
 set(bin2c_cmdline

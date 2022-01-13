@@ -1,3 +1,8 @@
 grass.jpg: https://www.textures.com/download/grass0053/12098, coloring modified
 rock.jpg: https://www.textures.com/download/soilrough0039/8661
 road: https://www.textures.com/download/3dscans0025/126873
+
+water: https://doc.qt.io/qt-5.12/images/used-in-examples/advancedcustommaterial/textures/WaterDiffuse.jpg
+waternormal: https://doc.qt.io/qt-5.12/images/used-in-examples/advancedcustommaterial/textures/WaterNormal.jpg
+waterspecular: https://doc.qt.io/qt-5.12/images/used-in-examples/advancedcustommaterial/textures/WaterSpecular.jpg
+waterwave: https://doc.qt.io/qt-5.12/images/used-in-examples/advancedcustommaterial/textures/Waterwave.jpg

@@ -18,7 +18,8 @@ public:
 
     GLuint getRefractionTexture();
     GLuint getRefractionDepthTexture();
-
+    GLuint getRefractionFrameBuffer();
+    GLuint getReflectionFrameBuffer();
 private:
     GLuint reflectionFrameBuffer;
     GLuint reflectionTexture;
@@ -35,4 +36,5 @@ private:
     GLuint createTextureAttachment( int width, int height);
     GLuint createDepthTextureAttachment(int width, int height);
     GLuint createDepthBufferAttachment(int width, int height);
+
 };

@@ -54,6 +54,14 @@ GLuint WaterFrameBuffers::getRefractionDepthTexture() {//get the resulting depth
     return refractionDepthTexture;
 }
 
+GLuint WaterFrameBuffers::getRefractionFrameBuffer() {//get the resulting depth texture
+    return refractionDepthTexture;
+}
+
+GLuint WaterFrameBuffers::getReflectionFrameBuffer() {//get the resulting depth texture
+    return refractionDepthTexture;
+}
+
 
 void WaterFrameBuffers::initialiseReflectionFrameBuffer() {
     reflectionFrameBuffer = createFrameBuffer();
@@ -100,10 +108,10 @@ GLuint WaterFrameBuffers::createTextureAttachment(int width, int height) {
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
     return texture;
 }

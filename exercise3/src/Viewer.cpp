@@ -13,13 +13,13 @@
 #include <iostream>
 
 #include <stb_image.h>
+#include <ctime>
 
 #include "glsl.h"
 #include "textures.h"
 
 const uint32_t PATCH_SIZE = 256; //number of vertices along one side of the terrain patch
 const int WATER_HEIGHT = 3;
-
 
 std::vector<uint32_t> indices;
 std::vector<uint32_t> waterIndices;
@@ -28,7 +28,7 @@ Viewer::Viewer()
         : AbstractViewer("CG1 Exercise 3"),
           terrainPositions(nse::gui::VertexBuffer), terrainIndices(nse::gui::IndexBuffer),
           waterPositionBuffer(nse::gui::VertexBuffer), waterIndexBuffer(nse::gui::IndexBuffer),
-          offsetBuffer(nse::gui::VertexBuffer), waterFrameBuffers() {
+          offsetBuffer(nse::gui::VertexBuffer), waterFrameBuffers(),startTime(getCurrentTime()) {
     LoadShaders();
     CreateGeometry();
 
@@ -44,6 +44,11 @@ Viewer::Viewer()
     camera().RotateAroundFocusPointLocal(
             Eigen::AngleAxisf(-0.5f, Eigen::Vector3f::UnitY()) * Eigen::AngleAxisf(-0.05f, Eigen::Vector3f::UnitX()));
     camera().FixClippingPlanes(0.1f, 1000.f);
+}
+
+uint32_t Viewer::getCurrentTime(){
+    using namespace std::chrono;
+    return duration_cast< milliseconds >(system_clock::now().time_since_epoch()).count();
 }
 
 bool Viewer::resizeEvent(const Eigen::Vector2i &) {
@@ -153,7 +158,10 @@ void Viewer::CreateGeometry() {
     roadNormalMap = CreateTexture((unsigned char *) roadnormals_jpg, roadnormals_jpg_size);
     roadSpecularMap = CreateTexture((unsigned char *) roadspecular_jpg, roadspecular_jpg_size);
     alphaMap = CreateTexture((unsigned char *) alpha_jpg, alpha_jpg_size, false);
-    waterTexture = CreateTexture((unsigned char *) water_jpg, water_jpg_size, true, false);
+    waterTexture = CreateTexture((unsigned char *) water_jpg, water_jpg_size);
+    waterNormalMap = CreateTexture((unsigned char *) waternormal_jpg, waternormal_jpg_size);
+    waterSpecularMap = CreateTexture((unsigned char *) waterspecular_jpg, waterspecular_jpg_size);
+    waterWaveHeightMap = CreateTexture((unsigned char *) waterwave_jpg, waterwave_jpg_size);
 }
 
 void Viewer::renderWater(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, int visiblePatches,
@@ -163,21 +171,36 @@ void Viewer::renderWater(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition, 
     waterShader.setUniform("mvp", mvp);
     waterShader.setUniform("cameraPos", cameraPosition, false);
     waterShader.setUniform("plane", clippingPlane);
-
+    std::cout <<"time: "<<  (getCurrentTime() - startTime) << std::endl;
+    waterShader.setUniform("time", (int)(getCurrentTime() - startTime) / 30);
+    std::cout <<"afterTime" << std::endl;
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, backgroundTexture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, waterFrameBuffers.getReflectionTexture());
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, waterFrameBuffers.getRefractionTexture());
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, waterTexture);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, waterNormalMap);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, waterSpecularMap);
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, waterWaveHeightMap);
     waterShader.setUniform("plane", clippingPlane);
     waterShader.setUniform("background", 0);
-    waterShader.setUniform("reflectionTexture", 1);
-    waterShader.setUniform("refractionTexture", 2);
+    //waterShader.setUniform("reflectionTexture", 1);
+    //waterShader.setUniform("refractionTexture", 2);
+    waterShader.setUniform("waterTexture", 3);
+    waterShader.setUniform("waterNormal", 4);
+    waterShader.setUniform("waterSpecular", 5);
+    waterShader.setUniform("waterHeightMap", 6);
     waterVAO.bind();
     glVertexAttribDivisor(waterShader.attrib("offset"), 1);
     glDrawElementsInstanced(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, (void *) nullptr,
                             visiblePatches);
+    std::cout <<"afterWAter" << std::endl;
 }
 
 
@@ -238,12 +261,13 @@ void Viewer::RenderSky(bool blit) {
     glDisable(GL_DEPTH_CLAMP);
     glDepthMask(GL_TRUE);
 
-    /* Don't use this for rendering the sky into the reflection and refraction buffers */
-    if (blit) {
+    if(blit){
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, backgroundFBO);
         glBlitFramebuffer(0, 0, width(), height(), 0, 0, width(), height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
+
+
 }
 
 void CalculateViewFrustum(const Eigen::Matrix4f &mvp, Eigen::Vector4f *frustumPlanes,
@@ -283,40 +307,34 @@ void Viewer::drawContents() {
     camera().ComputeCameraMatrices(view, proj);
     Eigen::Matrix4f mvp = proj * view;
     Eigen::Vector3f cameraPosition = view.inverse().col(3).head<3>();
-
+    waterFrameBuffers.unbindCurrentFrameBuffer();
+    RenderSky(true);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CLIP_DISTANCE0);
 
     int visiblePatches = calculcateOffsets(mvp);
-
     /* reflection */
-
-
-    waterFrameBuffers.bindReflectionFrameBuffer();
-    float distance = 2 * (cameraPosition.y() - WATER_HEIGHT);
-    Eigen::Matrix4f reflectionView = view;
-    reflectionView(2, 1) -= distance;
-
-    reflectionView(1, 0) = -reflectionView(1, 0);
-    reflectionView(1, 1) = -reflectionView(1, 1);
-    reflectionView(1, 2) = -reflectionView(1, 2);
-    reflectionView(1, 3) = -reflectionView(1, 3);
-    Eigen::Matrix4f reflectionMvp = reflectionView * proj;
-    RenderSky(false);
-    renderTerrain(reflectionMvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, 1, 0, -WATER_HEIGHT));
-    /* refraction */
-    waterFrameBuffers.bindRefractionFrameBuffer();
-    RenderSky(false);
-    renderTerrain(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, WATER_HEIGHT));
+//   float distance = 2* (cameraPosition.y() - WATER_HEIGHT);
+//   view(3,1) -= distance;
+//   view(1,2) = -view(1,2);
+//   Eigen::Matrix4f reflectionMVP = proj * view;
+//   waterFrameBuffers.bindReflectionFrameBuffer();
+//   RenderSky(false);
+//   renderTerrain(reflectionMVP, cameraPosition, visiblePatches, Eigen::Vector4f(0, 1, 0, -WATER_HEIGHT));
+//   view(3,1) += distance;
+//   view(1,2) = -view(1,2);
+//  // /* refraction */
+//   waterFrameBuffers.bindRefractionFrameBuffer();
+//   RenderSky(false);
+//   renderTerrain(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, WATER_HEIGHT));
 
 /* Render */
     waterFrameBuffers.unbindCurrentFrameBuffer();
     glDisable(GL_CLIP_DISTANCE0);
     glViewport(0, 0, width(), height());
-    RenderSky(true);
-    renderWater(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, 15));
     renderTerrain(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, 15));
+    renderWater(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, 15));
 
 
 //Render text

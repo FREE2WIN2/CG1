@@ -25,7 +25,7 @@ public:
 private:	
 
 	void RenderSky(bool blit);
-
+    uint32_t getCurrentTime();
 	Eigen::Matrix4f view, proj;
 
         nse::gui::GLShader skyShader;
@@ -41,13 +41,13 @@ private:
     nse::gui::GLBuffer waterPositionBuffer;
     nse::gui::GLBuffer waterIndexBuffer;
     WaterFrameBuffers waterFrameBuffers;
-	GLuint grassTexture, rockTexture, roadColorTexture, roadNormalMap, roadSpecularMap, alphaMap, waterTexture;
+	GLuint grassTexture, rockTexture, roadColorTexture, roadNormalMap, roadSpecularMap, alphaMap, waterTexture,
+            waterNormalMap,waterSpecularMap, waterWaveHeightMap;
 
 	nse::gui::GLBuffer offsetBuffer;
 
 	GLuint backgroundFBO, backgroundTexture;
 
-    GLuint reflectionFBO;
-    GLuint refractionFBO;
+    uint32_t startTime;
 
 };
