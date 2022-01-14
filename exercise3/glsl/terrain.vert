@@ -18,9 +18,6 @@ out vec3 bitangent;
 float getTerrainHeight(vec2 p);
 
 void calcNormal(vec3 vertice){
-
-
-
 	float sampleOffset = 1.0f;
 	float x = vertice.x;
 	float z = vertice.z;
@@ -28,23 +25,19 @@ void calcNormal(vec3 vertice){
 	float hR = getTerrainHeight(vec2(x + sampleOffset, z));
 	float hD = getTerrainHeight(vec2(x, z - sampleOffset));
 	float hU = getTerrainHeight(vec2(x, z + sampleOffset));
+
 	normal = normalize(vec3(hL - hR, sampleOffset * 2, hD - hU));
 
 	tangent = cross(vec3(1,0,0),normal);
 	bitangent = cross(vec3(0,0,1),normal);
-
-
 }
-
-
 
 
 void main()
 {
-
 	vec4 heightPosition = position + vec4(offset.x,0,offset.y,0);
 	heightPosition.y = getTerrainHeight(heightPosition.xz);
-	gl_Position = mvp * (heightPosition);
+	gl_Position = mvp * heightPosition;
 	calcNormal(heightPosition.xyz);
 	fragCoord = heightPosition.xyz;
 	gl_ClipDistance[0] = dot(heightPosition,plane);

@@ -62,7 +62,7 @@ void readNormal(){
     vec3 normalTexture = getTexture(normalSampler).xyz;
     vec3 tanNormal = 2 * normalTexture - 1;
     mat3 MT = inverse(mat3(tangent, bitangent, normal));
-    nnormal =  normalize(tanNormal * MT);
+    nnormal = normalize(tanNormal * MT);
 }
 
 vec4 getTexture()
@@ -76,13 +76,11 @@ vec4 getTexture()
     vec4 color;
 
     float revSlope = 1 - slope;
-    float blend =  min(1, (1- revSlope * revSlope) * 1.8f);
+    float blend =  min(1, (1 - revSlope * revSlope) * 1.8f);
     color = mix(grassTexture, rockTexture, blend);
 
-    if (alphaTexture.x >= 0.25){
-        specular = getTexture(roadSpecularSampler).x;//grey
+        specular = mix(vec4(0),getTexture(roadSpecularSampler), alphaTexture.x).x;//grey
         readNormal();
-    }
     vec4 roadTexture = getTexture(roadSampler);
 
     color = mix(color, roadTexture, alphaTexture.x);
@@ -93,7 +91,7 @@ vec4 calculateFog(vec4 color, int fogMinDist, int fogMaxDist){
     /* fog */
     float dist = length(fragCoord - cameraPos);
     float fogFactor = (fogMaxDist - dist) / (fogMaxDist - fogMinDist);
-    fogFactor = 1- clamp(fogFactor, 0.0, 1.0);
+    fogFactor = 1 - clamp(fogFactor, 0.0, 1.0);
     vec4 backgroundColor = getBackgroundColor();
     color = mix(color,backgroundColor,fogFactor);
     return color;

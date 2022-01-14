@@ -237,9 +237,8 @@ void Viewer::renderTerrain(Eigen::Matrix4f &mvp, Eigen::Vector3f &cameraPosition
     terrainVAO.bind();
     terrainShader.setUniform("plane", clippingPlane);
     glVertexAttribDivisor(terrainShader.attrib("offset"), 1);
-    glDrawElementsInstanced(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, (void *) 0,
+    glDrawElementsInstanced(GL_TRIANGLE_STRIP, terrainIndices.bufferSize(), GL_UNSIGNED_INT, 0,
                             visiblePatches);
-
 }
 
 
@@ -311,7 +310,7 @@ void Viewer::drawContents() {
     glEnable(GL_CLIP_DISTANCE0);
 
     int visiblePatches = calculcateOffsets(mvp);
-    /* reflection */
+     /* reflection */
 //   float distance = 2* (cameraPosition.y() - WATER_HEIGHT);
 //   view(3,1) -= distance;
 //   view(1,2) = -view(1,2);
@@ -321,7 +320,7 @@ void Viewer::drawContents() {
 //   renderTerrain(reflectionMVP, cameraPosition, visiblePatches, Eigen::Vector4f(0, 1, 0, -WATER_HEIGHT));
 //   view(3,1) += distance;
 //   view(1,2) = -view(1,2);
-//  // /* refraction */
+//   /* refraction */
 //   waterFrameBuffers.bindRefractionFrameBuffer();
 //   RenderSky(false);
 //   renderTerrain(mvp, cameraPosition, visiblePatches, Eigen::Vector4f(0, -1, 0, WATER_HEIGHT));
