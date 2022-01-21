@@ -44,6 +44,8 @@ public:
 
 	//returns a the position of the point as a reference point which is used to sort the primitive in the AABB tree construction
 	Eigen::Vector3f ReferencePoint() const;
+
+
 };
 
 

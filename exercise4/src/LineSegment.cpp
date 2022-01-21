@@ -97,7 +97,27 @@ Eigen::Vector3f LineSegment::ClosestPoint(const Eigen::Vector3f& p) const
 {
 	//the two endpoints of the line segment are v0,v1
 	/* Task 4.2.1 */
-	return Eigen::Vector3f(0,0,0);
+    // ((x-v0)*direction) / (direction * direction)
+    // (sub*direction) / dirSq
+
+    Eigen::Vector3f direction = Eigen::Vector3f(v0.x()-v1.x(),v0.y()-v1.y(),v0.z()-v1.z());
+
+    Eigen::Vector3f dirSq = Eigen::Vector3f(direction.x()*direction.x(),direction.y()*direction.y(),direction.z()*direction.z());
+    Eigen::Vector3f sub =  (p-v0);
+    Eigen::Vector3f div = Eigen::Vector3f(sub.x()*direction.x(),sub.y()*direction.y(),sub.z()*direction.z());
+
+    Eigen::Vector3f orthogonalProjectedPoint = Eigen::Vector3f(div.x()/dirSq.x(),div.y()/dirSq.y(),div.z()/dirSq.z());
+
+    Eigen::Vector3f minPoint = v0.x() < v1.x() ? v0:v1;
+    Eigen::Vector3f maxPoint = v0.x() < v1.x() ? v1:v0;
+   if(orthogonalProjectedPoint.x() < minPoint.x() || orthogonalProjectedPoint.y() < minPoint.y() || orthogonalProjectedPoint.z() < minPoint.z() ){
+       return minPoint;
+   }
+    if(orthogonalProjectedPoint.x() > maxPoint.x() || orthogonalProjectedPoint.y() > maxPoint.y() || orthogonalProjectedPoint.z() > maxPoint.z() ){
+       return maxPoint;
+   }
+	return orthogonalProjectedPoint;
+
 }
 
 //returns the squared distance between point p and the line segment

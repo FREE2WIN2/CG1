@@ -17,6 +17,9 @@ class GridTraverser
 	Eigen::Vector3i current;
 
 	/* you can additional attributes for incremental calculation here */
+    Eigen::Vector3f currentPosition;
+
+    float tx,ty,tz;
 
 public:
 	//default constructor
@@ -47,5 +50,7 @@ public:
 	void operator++(int);
 
 	//return current cell index
-	Eigen::Vector3i operator*();		
+	Eigen::Vector3i operator*();
+
+    void CalculateNextGridDimensions();
 };
