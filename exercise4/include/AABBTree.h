@@ -8,6 +8,7 @@
 #include <utility>
 
 #include <util/OpenMeshUtils.h>
+#include <iostream>
 #include "Box.h"
 #include "Triangle.h"
 #include "LineSegment.h"
@@ -158,6 +159,8 @@ private:
         SearchEntry(float sqrDistance, const AABBNode *node)
                 : sqrDistance(sqrDistance), node(node) {}
 
+        ~SearchEntry() {}
+
         //search entry a < b means a.sqr_distance > b. sqr_distance
         bool operator<(const SearchEntry &e) const {
             return sqrDistance > e.sqrDistance;
@@ -179,6 +182,7 @@ private:
         ResultEntry(float sqrDistance, const Primitive *p)
                 : sqrDistance(sqrDistance), prim(p) {}
 
+        ~ResultEntry() {}
         //result_entry are sorted by their sqr_distance using this less than operator
         bool operator<(const ResultEntry &e) const {
             return sqrDistance < e.sqrDistance;
@@ -345,44 +349,140 @@ public:
     //closest k primitive computation
     std::vector<ResultEntry> ClosestKPrimitives(size_t k, const Eigen::Vector3f &q) const {
         //student begin
-        return ClosestKPrimitivesLinearSearch(k, q);
+        std::priority_queue<ResultEntry> k_best;
+
+        assert(IsCompleted());
+        if (root == nullptr)
+            return std::vector<ResultEntry>();
+
+        const AABBNode *rootNode = Root();
+        std::priority_queue<SearchEntry,std::vector<SearchEntry>,std::less<SearchEntry>> priorityQueue = searchFromNode(rootNode, q);
+
+        while(!priorityQueue.empty()) {
+            SearchEntry searchEntry = priorityQueue.top();
+            priorityQueue.pop();
+
+            if (k_best.size() == k && k_best.top().sqrDistance < searchEntry.sqrDistance) {
+                break;
+            }
+
+            if (searchEntry.node->IsLeaf()) {
+
+                const AABBLeafNode *leaf = (AABBLeafNode *) searchEntry.node;
+                auto pend = leaf->end();
+                for (auto pit = leaf->begin(); pit != pend; ++pit) {
+                    float dist = pit->SqrDistance(q);
+                    if (k_best.size() < k) {
+                        k_best.push(ResultEntry(dist, *pit));
+                        continue;
+                    }
+                    if (k_best.top().SqrDistance > dist) {
+                        k_best.pop();
+                        k_best.push(ResultEntry(dist, *pit));
+                    }
+                }
+            } else {
+                std::priority_queue<SearchEntry,std::vector<SearchEntry>,std::less<SearchEntry>>  searchResults = searchFromNode(searchEntry.node,q,k_best.top().sqrDistance);
+                while(!searchResults.empty()){
+                    priorityQueue.push(searchResults.top());
+                    searchResults.pop();
+                }
+            }
+        }
+
+        //move to result
+        std::vector<ResultEntry> result(k_best.size());
+        auto rend = result.end();
+        for (auto rit = result.begin(); rit != rend; ++rit) {
+            *rit = k_best.top();
+            k_best.pop();
+        }
+        return result;
         //student end
     }
 
     //returns the closest primitive and its squared distance to the point q
+
     ResultEntry ClosestPrimitive(const Eigen::Vector3f &q) const {
         assert(IsCompleted());
         if (root == nullptr)
             return ResultEntry();
         /* Task 4.2.1 */
+
+        const AABBNode *rootNode = Root();
+        std::priority_queue<SearchEntry,std::vector<SearchEntry>,std::less<SearchEntry>> priorityQueue = searchFromNode(rootNode, q);
 //
-        auto currentNode = Root();
-        while (!currentNode->IsLeaf()) {
-            AABBSplitNode *node = (AABBSplitNode *) currentNode;
+
+        //is best entry really the best entry?
+        ResultEntry best;
+        while(!priorityQueue.empty()) {
+            SearchEntry searchEntry = priorityQueue.top();
+            priorityQueue.pop();
+
+            if (best.sqrDistance < searchEntry.sqrDistance) {
+                break;
+            }
+
+            if (searchEntry.node->IsLeaf()) {
+
+                const AABBLeafNode *leaf = (AABBLeafNode *) searchEntry.node;
+
 //
-            float distanceL = node->Left()->GetBounds().SqrDistance(q);
-            float distanceR = node->Right()->GetBounds().SqrDistance(q);
-            if (distanceL < distanceR) {
-                currentNode = node->Left();
+                auto pend = leaf->end();
+                for (auto pit = leaf->begin(); pit != pend; ++pit) {
+                    float dist = pit->SqrDistance(q);
+                    if (dist < best.sqrDistance) {
+                        best.sqrDistance = dist;
+                        best.prim = &(*pit);
+                    }
+                }
+
             } else {
-                currentNode = node->Right();
+                std::priority_queue<SearchEntry,std::vector<SearchEntry>,std::less<SearchEntry>>  searchResults = searchFromNode(searchEntry.node,q,best.sqrDistance);
+                while(!searchResults.empty()){
+                    priorityQueue.push(searchResults.top());
+                    searchResults.pop();
+                }
             }
         }
-//
-        AABBLeafNode *leaf = (AABBLeafNode *) currentNode;
-        ResultEntry best;
-//
-        auto pend = leaf->end();
-        for (auto pit = leaf->begin(); pit != pend; ++pit) {
-            float dist = pit->SqrDistance(q);
-            if (dist < best.sqrDistance) {
-                best.sqrDistance = dist;
-                best.prim = &(*pit);
-            }
-       }
+
         return best;
 
         // return ClosestPrimitiveLinearSearch(q);
+    }
+
+    std::priority_queue<SearchEntry,std::vector<SearchEntry>,std::less<SearchEntry>> searchFromNode(
+            const AABBNode* node,
+            const Eigen::Vector3f &q,
+            const float currentDistance = FLT_MAX) const {
+
+        auto currentNode = node;
+        std::priority_queue<SearchEntry,std::vector<SearchEntry>,std::less<SearchEntry>>  priorityQueue;
+        while (!currentNode->IsLeaf()) {
+            if(currentNode->GetBounds().SqrDistance(q) > currentDistance){
+                return priorityQueue;
+            }
+            const AABBSplitNode* node = (AABBSplitNode*) currentNode;
+
+            const AABBNode* rightNode = node->Right();
+            const AABBNode* leftNode = node->Left();
+            //Check the distances
+            float distanceL = leftNode->GetBounds().SqrDistance(q);
+            float distanceR = rightNode->GetBounds().SqrDistance(q);
+
+            if (distanceL < distanceR) {
+                currentNode = leftNode;
+                SearchEntry rightSearchEntry(distanceR, rightNode);
+                priorityQueue.push(rightSearchEntry);
+            } else {
+                currentNode = rightNode;
+                SearchEntry leftSearchEntry(distanceL, leftNode);
+                priorityQueue.push(leftSearchEntry);
+            }
+        }
+        SearchEntry lastEntry(currentNode->GetBounds().SqrDistance(q), currentNode);
+        priorityQueue.push(lastEntry);
+        return priorityQueue;
     }
 
     //return the closest point position on the closest primitive in the tree with respect to the query point q

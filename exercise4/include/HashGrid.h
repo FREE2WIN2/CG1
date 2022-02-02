@@ -179,7 +179,34 @@ public:
 						cellHashMap[idx].push_back(p);
 
 	}
-	
+
+    void Insert(const LineSegment& p)
+    {
+//scanLine with scanning lines of bb
+        //https://www.geeksforgeeks.org/computer-graphics-scan-line-algorithm-in-3d-hidden-surface-removal/
+        Box b = p.ComputeBounds();
+        Eigen::Vector3f lb = b.LowerBound();
+        Eigen::Vector3f ub = b.UpperBound();
+        if(lb[0] > ub[0])
+            return;
+        if(lb[1] > ub[1])
+            return;
+        if(lb[2] > ub[2])
+            return;
+        Eigen::Vector3i lb_idx = PositionToIndex(lb);
+        Eigen::Vector3i ub_idx = PositionToIndex(ub);
+
+
+
+        Eigen::Vector3i idx;
+        for(idx[0] = lb_idx[0]; idx[0] <=ub_idx[0]; ++idx[0])
+            for(idx[1] = lb_idx[1]; idx[1] <=ub_idx[1]; ++idx[1])
+                for(idx[2] = lb_idx[2]; idx[2] <=ub_idx[2]; ++idx[2])
+                    if(p.Overlaps(CellBounds(idx)))
+                        cellHashMap[idx].push_back(p);
+
+    }
+
 
 	//remove all cells from hash grid
 	void Clear()
