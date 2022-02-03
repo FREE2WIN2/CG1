@@ -78,15 +78,34 @@ bool ComputeParametrizationOfTopologicalDisk(HEMesh &mesh) {
     }
 
     /* Task 5.2.1 */
-    Eigen::Vector2f middle(0.5,0.5);
-    float radius = 0.5;
-    float radiusSquared = radius*radius;
-    float length = mesh.calc_edge_length(boundary);
-    float angle = acos(sqrt((radiusSquared * 2 - length * length)/2*radius*length)); //Sqrt(a²+b²-c² / 2ab)
-    float x = middle.x() + radius * cos(angle);
-    float y = middle.y() + radius * sin(angle);
 
-    Eigen::Vector2f circlePos(x,y);
+    int boundaries = 0;
+    float boundaryLength = 0.0;
+    OpenMesh::HalfedgeHandle start = boundary;
+    do {
+        boundaryLength += mesh.calc_edge_length(boundary);
+        boundary = mesh.next_halfedge_handle(boundary);
+        boundaries++;
+    } while (mesh.is_boundary(boundary) && start != boundary);
+    float radius = 0.5;
+    Eigen::Vector2f middle(0.5, 0.5);
+    float angle = 0;
+
+    do {
+        float length = mesh.calc_edge_length(boundary);
+
+        angle += 2 * M_PI * (length / boundaryLength);
+        float x = middle.x() + radius * cos(angle);
+        float y = middle.y() + radius * sin(angle);
+        boundary = mesh.next_halfedge_handle(boundary);
+
+        OpenMesh::VectorT<float, 2> circlePos(x, y);
+        mesh.set_texcoord2D(mesh.from_vertex_handle(boundary), circlePos);
+
+    } while (mesh.is_boundary(boundary) && start != boundary && angle < 2 * M_PI);
+
+
+
 
     return true;
 }
