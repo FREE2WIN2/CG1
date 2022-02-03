@@ -48,5 +48,7 @@ public:
 	//returns a reference point  which is on the line segment and is used to sort the primitive in the AABB tree construction
 	Eigen::Vector3f ReferencePoint() const;
 
+    Eigen::Vector3f getV0() const;
+    Eigen::Vector3f getV1() const;
 };
 

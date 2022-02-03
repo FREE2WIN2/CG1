@@ -31,6 +31,6 @@ void BuildHashGridFromEdges(const HEMesh& m, HashGrid<LineSegment >& grid, const
 	grid = HashGrid<LineSegment>(cellSize, 1);
 	auto eend = m.edges_end();
 	for(auto eit = m.edges_begin(); eit != eend; ++eit)
-		grid.Insert(LineSegment(m,*eit));
+		grid.InsertLine(LineSegment(m,*eit));
 	std::cout << "Done (using " << grid.NumCells() << " cells)." << std::endl;
 }

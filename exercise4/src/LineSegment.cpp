@@ -139,5 +139,12 @@ Eigen::Vector3f LineSegment::ReferencePoint() const
 	return 0.5f*(v0 + v1);
 }
 
+Eigen::Vector3f LineSegment::getV0() const{
+    return v0;
+}
+
+Eigen::Vector3f LineSegment::getV1() const{
+    return v1;
+}
 
 

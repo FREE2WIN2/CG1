@@ -47,57 +47,10 @@ void GridTraverser::operator++(int) {
     /* Task 4.2.2 */
     //traverse one step along the ray
     //update the cell index stored in attribute "current"
-    CalculateNextGridDimensions();
-    if (tx < ty && tx < tz) {
-        currentPosition += dir * tx;
-        if (dir.x() * tx > 0) {
-            current.x()++;
-        } else {
-            current.x()--;
-        }
-    } else if (ty < tx && ty < tz) {
-        currentPosition += dir * ty;
-        if (dir.y() * ty > 0) {
-            current.y()++;
-        } else {
-            current.y()--;
-        }
-    } else if (tz < tx && tz < ty) {
-        currentPosition += dir * tz;
-        if (dir.z() * tz > 0) {
-            current.z()++;
-        } else {
-            current.z()--;
-        }
-    }
-
-}
+    CalculateNextGrid(current,dir,cellExtents,currentPosition);
+  }
 
 Eigen::Vector3i GridTraverser::operator*() {
     return current;
 }
 
-void GridTraverser::CalculateNextGridDimensions() {
-
-    float nextGridPositionx = ( current.x() + dir.x()/abs(dir.x()) ) * cellExtents.x();
-    float nextGridPositiony = ( current.y() + dir.y()/abs(dir.y()) ) * cellExtents.y();
-    float nextGridPositionz = ( current.z() + dir.z()/abs(dir.z()) ) * cellExtents.z();
-    tx = (nextGridPositionx - currentPosition.x()) / dir.x() ;
-    ty =  (nextGridPositiony - currentPosition.y()) / dir.y();
-    tz =  (nextGridPositionz - currentPosition.z()) / dir.z();
-
-    if (tx == 0) {
-        tx = cellExtents.x() / dir.x();
-    }
-
-    if (ty == 0) {
-        ty = cellExtents.y() / dir.y();
-    }
-
-    if (tz == 0) {
-        tz = cellExtents.z() / dir.z();
-    }
-
-}
-
-	
