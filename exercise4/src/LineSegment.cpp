@@ -15,7 +15,7 @@ LineSegment::LineSegment()
 LineSegment::LineSegment(const Eigen::Vector3f& v0, const Eigen::Vector3f& v1):v0(v0),v1(v1)
 {
 }
-	
+
 //construct a line segment from the edge e of the halfedge mesh m
 LineSegment::LineSegment(const HEMesh& m,const OpenMesh::EdgeHandle& e):h(e)
 {
@@ -27,12 +27,12 @@ LineSegment::LineSegment(const HEMesh& m,const OpenMesh::EdgeHandle& e):h(e)
 //returns an axis aligned bounding box of the line segment
 Box LineSegment::ComputeBounds() const
 {
-	Box b;	
+	Box b;
 	b.Insert(v0);
 	b.Insert(v1);
 	return b;
 }
-	
+
 //returns true if the line segment overlaps the given box b
 bool LineSegment::Overlaps(const Box& b) const
 {
@@ -41,18 +41,18 @@ bool LineSegment::Overlaps(const Box& b) const
 
 	if(!b.Overlaps(aabb))
 		return false;
-		
+
 	Eigen::Vector3f o = b.Center();
 	Eigen::Vector3f u1 = v0-o;
 	Eigen::Vector3f u2 = v1-o;
-		
+
 	Eigen::Vector3f d1 = v1-v0;
 	d1.normalize();
-		
+
 	float r = b.Radius(d1);
 	float lb = u1.dot(d1);
 	float ub = u2.dot(d1);
-	if(lb > ub) 
+	if(lb > ub)
 		std::swap(lb,ub);
 	if(lb > r || ub < -r)
 		return false;
@@ -62,7 +62,7 @@ bool LineSegment::Overlaps(const Box& b) const
 	r = b.Radius(d2);
 	lb = u1.dot(d2);
 	ub = u2.dot(d2);
-	if(lb > ub) 
+	if(lb > ub)
 		std::swap(lb,ub);
 	if(!OverlapIntervals(-r,r,lb,ub))
 		return false;
@@ -72,7 +72,7 @@ bool LineSegment::Overlaps(const Box& b) const
 	r = b.Radius(d3);
 	lb = u1.dot(d3);
 	ub = u2.dot(d3);
-	if(lb > ub) 
+	if(lb > ub)
 		std::swap(lb,ub);
 	if(!OverlapIntervals(-r,r,lb,ub))
 		return false;
@@ -82,14 +82,14 @@ bool LineSegment::Overlaps(const Box& b) const
 	r = b.Radius(d4);
 	lb = u1.dot(d4);
 	ub = u2.dot(d4);
-		
+
 	if(!OverlapIntervals(-r,r,lb,ub))
 		return false;
 
 
 	return true;
-		
-				   
+
+
 }
 
 //returns the point with smallest distance topoint p which lies on the line segment
@@ -132,7 +132,7 @@ float LineSegment::Distance(const Eigen::Vector3f& p) const
 {
 	return sqrt(SqrDistance(p));
 }
-	
+
 //returns a reference point  which is on the line segment and is used to sort the primitive in the AABB tree construction
 Eigen::Vector3f LineSegment::ReferencePoint() const
 {
